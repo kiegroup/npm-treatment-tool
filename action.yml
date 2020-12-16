@@ -1,0 +1,21 @@
+name: "Package.json treatment tool"
+author: "Enrique Mingorance Cano <emingora@redhat.com>"
+description: |
+  A js tool to treat package.json files.
+inputs:
+  action:
+    description: "the action to execute"
+    required: true
+  scope:
+    description: "the scope name to add"
+    required: false
+  recursive:
+    description: "the scope name to add"
+    default: false
+    required: false
+runs:
+  using: "node12"
+  main: "dist/index.js"
+branding:
+  icon: "box"
+  color: "red"
