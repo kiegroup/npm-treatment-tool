@@ -67,6 +67,6 @@
     "arrowParens": "avoid"
   },
   "engines": {
-    "node": ">= 8.17.0"
+    "node": ">= 10.x"
   }
 }

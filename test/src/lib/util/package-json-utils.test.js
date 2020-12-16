@@ -6,7 +6,9 @@ const io = require("@actions/io");
 const path = require("path");
 
 const root = path.join(__dirname, "_temp", "json-utils");
-const packageJsonContent = JSON.parse('{ "name": "@scopeX/package1.json"}');
+const packageJsonContent = JSON.stringify(
+  JSON.parse('{ "name": "@scopeX/package1.json"}')
+);
 
 beforeAll(async () => {
   await io.rmRF(root);
