@@ -20,4 +20,8 @@ function getListPackageJsonFiles(options = { ignore: "node_modules/**" }) {
   return glob.sync("**/package.json", options);
 }
 
-module.exports = { getListPackageJsonFiles };
+function getFileList(options = { ignore: "node_modules/**" }) {
+  return glob.sync("**/*.ts | **/*.tsx | **/package.json | **/*.js", options);
+}
+
+module.exports = { getListPackageJsonFiles, getFileList };

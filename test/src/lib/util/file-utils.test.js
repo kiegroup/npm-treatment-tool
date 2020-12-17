@@ -1,6 +1,6 @@
 const {
   getListPackageJsonFiles
-} = require("../../../../src/lib/util/package-json-utils");
+} = require("../../../../src/lib/util/file-utils");
 const { promises: fs } = require("fs");
 const io = require("@actions/io");
 const path = require("path");

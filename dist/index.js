@@ -90,6 +90,46 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 14:
+/***/ (function(module) {
+
+function replace(fileContent, replacementMap) {
+  const jsonObject = JSON.parse(fileContent);
+  jsonObject.name = replacementMap[jsonObject.name];
+  treatDependencies(jsonObject.dependencies, replacementMap);
+  treatDependencies(jsonObject.devDependencies, replacementMap);
+  treatScripts(jsonObject.scripts, replacementMap);
+  return JSON.stringify(jsonObject, undefined, 2);
+}
+
+function treatDependencies(dependencies, replacementMap) {
+  if (dependencies && replacementMap) {
+    Object.keys(dependencies).forEach(function (dependency) {
+      if (replacementMap[dependency]) {
+        dependencies[replacementMap[dependency]] = dependencies[dependency];
+        delete dependencies[dependency];
+      }
+    });
+  }
+}
+
+function treatScripts(scripts, replacementMap) {
+  if (scripts && replacementMap) {
+    Object.entries(scripts).forEach(([scriptKey, scriptValue]) =>
+      Object.entries(replacementMap).forEach(([key, value]) => {
+        let script = scriptValue.replace(new RegExp(`\s${key}`, "gi"), value);
+        script = script.replace(new RegExp(`=${key}`, "gi"), `=${value}`);
+        scripts[scriptKey] = script;
+      })
+    );
+  }
+}
+
+module.exports = { replace };
+
+
+/***/ }),
+
 /***/ 49:
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
@@ -1338,7 +1378,7 @@ const {
 const { addScope } = __webpack_require__(655);
 const {
   getListPackageJsonFiles
-} = __webpack_require__(679);
+} = __webpack_require__(600);
 
 __webpack_require__(63).config();
 
@@ -1678,6 +1718,71 @@ exports.realpath = function realpath(p, cache, cb) {
     start();
   }
 };
+
+
+/***/ }),
+
+/***/ 178:
+/***/ (function(module) {
+
+function replace(fileContent) {
+  return fileContent;
+}
+
+module.exports = { replace };
+
+
+/***/ }),
+
+/***/ 209:
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+const eol = __webpack_require__(975);
+
+function replace(fileContent, replacementMap) {
+  return eol
+    .split(fileContent)
+    .map(line => treatRequire(line, replacementMap))
+    .map(line => treatImport(line, replacementMap))
+    .map(line => treatNodeModules(line, replacementMap))
+    .join(eol.auto);
+}
+
+function treatRequire(line, replacementMap) {
+  return treatRegEx(
+    line,
+    replacementMap,
+    `(require\\(["|'])($KEY)(.*["|']\\).*)(;)?`
+  );
+}
+
+function treatImport(line, replacementMap) {
+  return treatRegEx(
+    line,
+    replacementMap,
+    `(import { .* } from ["|'])($KEY)(.*["|'])(;)?`
+  );
+}
+
+function treatNodeModules(line, replacementMap) {
+  return treatRegEx(line, replacementMap, `(node_modules/)($KEY)(.*)(;)?`);
+}
+
+function treatRegEx(line, replacementMap, regEx) {
+  if (line && replacementMap) {
+    const key = Object.keys(replacementMap).find(key =>
+      line.match(new RegExp(regEx.replace("$KEY", escapeForRegExp(key)), "gi"))
+    );
+    return key ? line.replace(key, replacementMap[key]) : line;
+  }
+  return line;
+}
+
+function escapeForRegExp(str) {
+  return str.replace(/[\\^$.*+?()[\]{}|]/g, "\\$&"); // (A)
+}
+
+module.exports = { replace };
 
 
 /***/ }),
@@ -2171,6 +2276,40 @@ GlobSync.prototype._mark = function (p) {
 GlobSync.prototype._makeAbs = function (f) {
   return common.makeAbs(this, f)
 }
+
+
+/***/ }),
+
+/***/ 300:
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+/*
+ * Copyright 2019 Red Hat, Inc. and/or its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+const glob = __webpack_require__(402);
+
+function getListPackageJsonFiles(options = { ignore: "node_modules/**" }) {
+  return glob.sync("**/package.json", options);
+}
+
+function getFileList(options = { ignore: "node_modules/**" }) {
+  return glob.sync("**/*.ts | **/*.tsx | **/package.json | **/*.js", options);
+}
+
+module.exports = { getListPackageJsonFiles, getFileList };
 
 
 /***/ }),
@@ -3625,6 +3764,14 @@ exports.getState = getState;
 
 /***/ }),
 
+/***/ 600:
+/***/ (function(module) {
+
+module.exports = eval("require")("./src/lib/util/package-json-utils");
+
+
+/***/ }),
+
 /***/ 614:
 /***/ (function(module) {
 
@@ -3706,44 +3853,78 @@ module.exports = require("path");
 
 /***/ }),
 
+/***/ 643:
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+const path = __webpack_require__(622);
+const { ClientError } = __webpack_require__(79);
+
+const packageJson = __webpack_require__(14);
+const javascript = __webpack_require__(209);
+const none = __webpack_require__(178);
+
+function getFileReplacement(filePath) {
+  const fileName = path.basename(filePath);
+  const extension = path.extname(filePath);
+
+  if (fileName === "package.json") {
+    return packageJson;
+  }
+  if ([".js", ".tsx", ".ts"].includes(extension)) {
+    return javascript;
+  }
+
+  return none;
+}
+
+module.exports = { getFileReplacement };
+
+
+/***/ }),
+
 /***/ 655:
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
 const { logger } = __webpack_require__(79);
-const fs = __webpack_require__(747);
+const { getListPackageJsonFiles, getFileList } = __webpack_require__(300);
+const { getFileReplacement } = __webpack_require__(643);
 
-function addScope(scopeName, files) {
+const fs = __webpack_require__(747);
+const path = __webpack_require__(622);
+
+function addScope(scopeName) {
   const finalScopeName = treatScopeName(scopeName);
-  logger.info(
-    `Adding scope ${finalScopeName} to ${files} files (${files.length})`
-  );
-  for (const file of files) {
-    const json = getJsonFromFile(file);
-    const newName = getNewScope(finalScopeName, json);
-    json.name = newName;
-    writeFile(file, json);
+  const replacementMap = getAllProjectNames().reduce((acc, curr) => {
+    acc[curr] = getNewScope(curr, finalScopeName);
+    return acc;
+  }, {});
+
+  const filesToReplace = getFileList();
+  logger.info(`Replacing ${replacementMap} in ${filesToReplace.length} files`);
+
+  for (const filePath of filesToReplace) {
+    const fileReplacement = getFileReplacement(filePath);
+    const newFileContent = fileReplacement.replace(
+      fs.readFileSync(filePath),
+      replacementMap
+    );
+    fs.writeFileSync(filePath, newFileContent);
+    logger.info(`File ${path.basename(filePath)} replaced.`);
   }
 }
 
-function getJsonFromFile(file) {
-  logger.info(`Reading file ${file}`);
-  return JSON.parse(fs.readFileSync(file));
-}
-
-function getNewScope(scopeName, json) {
-  const nameMatch = json.name.match(/(@[\w-_]*\/)?(.*)/)[2];
-  const newName = `${scopeName}/${nameMatch}`;
-  logger.info(`Name ${json.name} replaced by ${newName}`);
-  return newName;
-}
-
-function writeFile(file, json) {
-  logger.info(`Writting file ${file}`);
-  fs.writeFileSync(file, JSON.stringify(json, undefined, 2));
+function getNewScope(packageName, newScopeName) {
+  return `${newScopeName}/${packageName.match(/(@[\w-_]*\/)?(.*)/)[2]}`;
 }
 
 function treatScopeName(scopeName) {
   return !scopeName.startsWith("@") ? `@${scopeName}` : scopeName;
+}
+
+function getAllProjectNames() {
+  getListPackageJsonFiles()
+    .map(file => JSON.parse(fs.readFileSync(file)))
+    .map(jsonObject => jsonObject.name);
 }
 
 module.exports = { addScope };
@@ -3815,36 +3996,6 @@ function slice (args) {
   for (var i = 0; i < length; i++) array[i] = args[i]
   return array
 }
-
-
-/***/ }),
-
-/***/ 679:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-/*
- * Copyright 2019 Red Hat, Inc. and/or its affiliates.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-const glob = __webpack_require__(402);
-
-function getListPackageJsonFiles(options = { ignore: "node_modules/**" }) {
-  return glob.sync("**/package.json", options);
-}
-
-module.exports = { getListPackageJsonFiles };
 
 
 /***/ }),
@@ -4196,6 +4347,54 @@ module.exports = {
   getScope,
   getRecursive
 };
+
+
+/***/ }),
+
+/***/ 975:
+/***/ (function(module) {
+
+!function(root, name, make) {
+  if ( true && module.exports) module.exports = make()
+  else root[name] = make()
+}(this, 'eol', function() {
+
+  var api = {}
+  var isWindows = typeof process != 'undefined' && 'win32' === process.platform
+  var linebreak = isWindows ? '\r\n' : '\n'
+  var newline = /\r\n|\r|\n/g
+
+  function before(text) {
+    return linebreak + text
+  }
+
+  function after(text) {
+    return text + linebreak
+  }
+
+  function converts(to) {
+    function convert(text) {
+      return text.replace(newline, to)
+    }
+    convert.toString = function() {
+      return to
+    }
+    return convert 
+  }
+
+  function split(text) {
+    return text.split(newline)
+  }
+
+  api['lf'] = converts('\n')
+  api['cr'] = converts('\r')
+  api['crlf'] = converts('\r\n')
+  api['auto'] = converts(linebreak)
+  api['before'] = before
+  api['after'] = after
+  api['split'] = split
+  return api
+});
 
 
 /***/ })

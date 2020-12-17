@@ -1,38 +1,43 @@
 const { logger } = require("../common");
-const fs = require("fs");
+const { getListPackageJsonFiles, getFileList } = require("../util/file-utils");
+const { getFileReplacement } = require("../replacement/selector");
 
-function addScope(scopeName, files) {
+const fs = require("fs");
+const path = require("path");
+
+function addScope(scopeName) {
   const finalScopeName = treatScopeName(scopeName);
-  logger.info(
-    `Adding scope ${finalScopeName} to ${files} files (${files.length})`
-  );
-  for (const file of files) {
-    const json = getJsonFromFile(file);
-    const newName = getNewScope(finalScopeName, json);
-    json.name = newName;
-    writeFile(file, json);
+  const replacementMap = getAllProjectNames().reduce((acc, curr) => {
+    acc[curr] = getNewScope(curr, finalScopeName);
+    return acc;
+  }, {});
+
+  const filesToReplace = getFileList();
+  logger.info(`Replacing ${replacementMap} in ${filesToReplace.length} files`);
+
+  for (const filePath of filesToReplace) {
+    const fileReplacement = getFileReplacement(filePath);
+    const newFileContent = fileReplacement.replace(
+      fs.readFileSync(filePath),
+      replacementMap
+    );
+    fs.writeFileSync(filePath, newFileContent);
+    logger.info(`File ${path.basename(filePath)} replaced.`);
   }
 }
 
-function getJsonFromFile(file) {
-  logger.info(`Reading file ${file}`);
-  return JSON.parse(fs.readFileSync(file));
-}
-
-function getNewScope(scopeName, json) {
-  const nameMatch = json.name.match(/(@[\w-_]*\/)?(.*)/)[2];
-  const newName = `${scopeName}/${nameMatch}`;
-  logger.info(`Name ${json.name} replaced by ${newName}`);
-  return newName;
-}
-
-function writeFile(file, json) {
-  logger.info(`Writting file ${file}`);
-  fs.writeFileSync(file, JSON.stringify(json, undefined, 2));
+function getNewScope(packageName, newScopeName) {
+  return `${newScopeName}/${packageName.match(/(@[\w-_]*\/)?(.*)/)[2]}`;
 }
 
 function treatScopeName(scopeName) {
   return !scopeName.startsWith("@") ? `@${scopeName}` : scopeName;
+}
+
+function getAllProjectNames() {
+  getListPackageJsonFiles()
+    .map(file => JSON.parse(fs.readFileSync(file)))
+    .map(jsonObject => jsonObject.name);
 }
 
 module.exports = { addScope };

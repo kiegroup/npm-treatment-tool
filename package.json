@@ -38,6 +38,7 @@
     "@actions/core": "^1.2.6",
     "argparse": "^2.0.1",
     "dotenv": "^8.2.0",
+    "eol": "^0.9.1",
     "glob": "^7.1.6"
   },
   "devDependencies": {
