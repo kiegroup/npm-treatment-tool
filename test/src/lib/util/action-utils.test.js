@@ -1,7 +1,6 @@
 const {
   getScope,
-  getAction,
-  getRecursive
+  getAction
 } = require("../../../../src/lib/util/action-utils");
 
 const { getInput } = require("@actions/core");
@@ -32,19 +31,6 @@ test("getAction", () => {
   );
   // Act
   const result = getAction();
-
-  // Assert
-  expect(result).toEqual(expectedResult);
-});
-
-test("getRecursive", () => {
-  // Arrange
-  const expectedResult = "./whateverfile";
-  getInput.mockImplementationOnce(param =>
-    param === "recursive" ? expectedResult : undefined
-  );
-  // Act
-  const result = getRecursive();
 
   // Assert
   expect(result).toEqual(expectedResult);

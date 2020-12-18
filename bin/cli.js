@@ -3,9 +3,6 @@
 const { ClientError, logger } = require("../src/lib/common");
 const { addScope } = require("../src/lib/tools/scope");
 const { getArguments } = require("./arguments/arguments-constructor");
-const {
-  getListPackageJsonFiles
-} = require("../src/lib/util/package-json-utils");
 
 require("dotenv").config();
 
@@ -18,11 +15,8 @@ async function main() {
   }
   logger.debug("ARGS", args);
 
-  if (args.action === "name") {
-    addScope(
-      args.s[0],
-      args.r ? getListPackageJsonFiles() : ["./package.json"]
-    );
+  if (args.action === "scope") {
+    addScope(args.s[0], { ignorePatterns: args.i ? args.i : [] });
   }
 }
 
