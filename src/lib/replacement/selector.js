@@ -1,9 +1,7 @@
 const path = require("path");
-const { ClientError } = require("../common");
-
-const packageJson = require("./package.json.js");
-const javascript = require("./javascript.js");
-const none = require("./none.js");
+const packageJson = require("./package.json");
+const javascript = require("./javascript");
+const none = require("./none");
 
 function getFileReplacement(filePath) {
   const fileName = path.basename(filePath);

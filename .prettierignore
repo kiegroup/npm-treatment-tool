@@ -1,2 +1,3 @@
 *.diff
 dist/index.js
+test/resources/**

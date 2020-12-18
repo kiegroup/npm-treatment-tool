@@ -117,9 +117,10 @@ function treatScripts(scripts, replacementMap) {
   if (scripts && replacementMap) {
     Object.entries(scripts).forEach(([scriptKey, scriptValue]) =>
       Object.entries(replacementMap).forEach(([key, value]) => {
-        let script = scriptValue.replace(new RegExp(`\s${key}`, "gi"), value);
+        let script = scriptValue.replace(new RegExp(` ${key}`, "gi"), value);
         script = script.replace(new RegExp(`=${key}`, "gi"), `=${value}`);
         scripts[scriptKey] = script;
+        scriptValue = script;
       })
     );
   }
@@ -127,6 +128,306 @@ function treatScripts(scripts, replacementMap) {
 
 module.exports = { replace };
 
+
+/***/ }),
+
+/***/ 16:
+/***/ (function(module) {
+
+module.exports = function runTheTrap(text, options) {
+  var result = '';
+  text = text || 'Run the trap, drop the bass';
+  text = text.split('');
+  var trap = {
+    a: ['\u0040', '\u0104', '\u023a', '\u0245', '\u0394', '\u039b', '\u0414'],
+    b: ['\u00df', '\u0181', '\u0243', '\u026e', '\u03b2', '\u0e3f'],
+    c: ['\u00a9', '\u023b', '\u03fe'],
+    d: ['\u00d0', '\u018a', '\u0500', '\u0501', '\u0502', '\u0503'],
+    e: ['\u00cb', '\u0115', '\u018e', '\u0258', '\u03a3', '\u03be', '\u04bc',
+      '\u0a6c'],
+    f: ['\u04fa'],
+    g: ['\u0262'],
+    h: ['\u0126', '\u0195', '\u04a2', '\u04ba', '\u04c7', '\u050a'],
+    i: ['\u0f0f'],
+    j: ['\u0134'],
+    k: ['\u0138', '\u04a0', '\u04c3', '\u051e'],
+    l: ['\u0139'],
+    m: ['\u028d', '\u04cd', '\u04ce', '\u0520', '\u0521', '\u0d69'],
+    n: ['\u00d1', '\u014b', '\u019d', '\u0376', '\u03a0', '\u048a'],
+    o: ['\u00d8', '\u00f5', '\u00f8', '\u01fe', '\u0298', '\u047a', '\u05dd',
+      '\u06dd', '\u0e4f'],
+    p: ['\u01f7', '\u048e'],
+    q: ['\u09cd'],
+    r: ['\u00ae', '\u01a6', '\u0210', '\u024c', '\u0280', '\u042f'],
+    s: ['\u00a7', '\u03de', '\u03df', '\u03e8'],
+    t: ['\u0141', '\u0166', '\u0373'],
+    u: ['\u01b1', '\u054d'],
+    v: ['\u05d8'],
+    w: ['\u0428', '\u0460', '\u047c', '\u0d70'],
+    x: ['\u04b2', '\u04fe', '\u04fc', '\u04fd'],
+    y: ['\u00a5', '\u04b0', '\u04cb'],
+    z: ['\u01b5', '\u0240'],
+  };
+  text.forEach(function(c) {
+    c = c.toLowerCase();
+    var chars = trap[c] || [' '];
+    var rand = Math.floor(Math.random() * chars.length);
+    if (typeof trap[c] !== 'undefined') {
+      result += trap[c][rand];
+    } else {
+      result += c;
+    }
+  });
+  return result;
+};
+
+
+/***/ }),
+
+/***/ 32:
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+var colors = __webpack_require__(464);
+
+module.exports = function() {
+  //
+  // Extends prototype of native string object to allow for "foo".red syntax
+  //
+  var addProperty = function(color, func) {
+    String.prototype.__defineGetter__(color, func);
+  };
+
+  addProperty('strip', function() {
+    return colors.strip(this);
+  });
+
+  addProperty('stripColors', function() {
+    return colors.strip(this);
+  });
+
+  addProperty('trap', function() {
+    return colors.trap(this);
+  });
+
+  addProperty('zalgo', function() {
+    return colors.zalgo(this);
+  });
+
+  addProperty('zebra', function() {
+    return colors.zebra(this);
+  });
+
+  addProperty('rainbow', function() {
+    return colors.rainbow(this);
+  });
+
+  addProperty('random', function() {
+    return colors.random(this);
+  });
+
+  addProperty('america', function() {
+    return colors.america(this);
+  });
+
+  //
+  // Iterate through all default styles and colors
+  //
+  var x = Object.keys(colors.styles);
+  x.forEach(function(style) {
+    addProperty(style, function() {
+      return colors.stylize(this, style);
+    });
+  });
+
+  function applyTheme(theme) {
+    //
+    // Remark: This is a list of methods that exist
+    // on String that you should not overwrite.
+    //
+    var stringPrototypeBlacklist = [
+      '__defineGetter__', '__defineSetter__', '__lookupGetter__',
+      '__lookupSetter__', 'charAt', 'constructor', 'hasOwnProperty',
+      'isPrototypeOf', 'propertyIsEnumerable', 'toLocaleString', 'toString',
+      'valueOf', 'charCodeAt', 'indexOf', 'lastIndexOf', 'length',
+      'localeCompare', 'match', 'repeat', 'replace', 'search', 'slice',
+      'split', 'substring', 'toLocaleLowerCase', 'toLocaleUpperCase',
+      'toLowerCase', 'toUpperCase', 'trim', 'trimLeft', 'trimRight',
+    ];
+
+    Object.keys(theme).forEach(function(prop) {
+      if (stringPrototypeBlacklist.indexOf(prop) !== -1) {
+        console.log('warn: '.red + ('String.prototype' + prop).magenta +
+          ' is probably something you don\'t want to override.  ' +
+          'Ignoring style name');
+      } else {
+        if (typeof(theme[prop]) === 'string') {
+          colors[prop] = colors[theme[prop]];
+          addProperty(prop, function() {
+            return colors[prop](this);
+          });
+        } else {
+          var themePropApplicator = function(str) {
+            var ret = str || this;
+            for (var t = 0; t < theme[prop].length; t++) {
+              ret = colors[theme[prop][t]](ret);
+            }
+            return ret;
+          };
+          addProperty(prop, themePropApplicator);
+          colors[prop] = function(str) {
+            return themePropApplicator(str);
+          };
+        }
+      }
+    });
+  }
+
+  colors.setTheme = function(theme) {
+    if (typeof theme === 'string') {
+      console.log('colors.setTheme now only accepts an object, not a string. ' +
+        'If you are trying to set a theme from a file, it is now your (the ' +
+        'caller\'s) responsibility to require the file.  The old syntax ' +
+        'looked like colors.setTheme(__dirname + ' +
+        '\'/../themes/generic-logging.js\'); The new syntax looks like '+
+        'colors.setTheme(require(__dirname + ' +
+        '\'/../themes/generic-logging.js\'));');
+      return;
+    } else {
+      applyTheme(theme);
+    }
+  };
+};
+
+
+/***/ }),
+
+/***/ 46:
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+const _GenericBar = __webpack_require__(952);
+const _options = __webpack_require__(469);
+
+// Progress-Bar constructor
+module.exports = class SingleBar extends _GenericBar{
+
+    constructor(options, preset){
+        super(_options.parse(options, preset));
+
+        // the update timer
+        this.timer = null;
+
+        // disable synchronous updates in notty mode
+        if (this.options.noTTYOutput && this.terminal.isTTY() === false){
+            this.options.synchronousUpdate = false;
+        }
+
+        // update interval
+        this.schedulingRate = (this.terminal.isTTY() ? this.options.throttleTime : this.options.notTTYSchedule);
+    }
+
+    // internal render function
+    render(){
+        // stop timer
+        if (this.timer){
+            clearTimeout(this.timer);
+            this.timer = null;
+        }
+
+        // run internal rendering
+        super.render();
+
+        // add new line in notty mode!
+        if (this.options.noTTYOutput && this.terminal.isTTY() === false){
+            this.terminal.newline();
+        }
+
+        // next update
+        this.timer = setTimeout(this.render.bind(this), this.schedulingRate);
+    }
+
+    update(current, payload){
+        // timer inactive ?
+        if (!this.timer) {
+            return;
+        }
+
+        super.update(current, payload);
+
+        // trigger synchronous update ?
+        // check for throttle time 
+        if (this.options.synchronousUpdate && (this.lastRedraw + this.options.throttleTime*2) < Date.now()){
+            // force update
+            this.render();
+        }
+    }
+
+    // start the progress bar
+    start(total, startValue, payload){
+        // progress updates are only visible in TTY mode!
+        if (this.options.noTTYOutput === false && this.terminal.isTTY() === false){
+            return;
+        }
+
+        // save current cursor settings
+        this.terminal.cursorSave();
+
+        // hide the cursor ?
+        if (this.options.hideCursor === true){
+            this.terminal.cursor(false);
+        }
+
+        // disable line wrapping ?
+        if (this.options.linewrap === false){
+            this.terminal.lineWrapping(false);
+        }
+
+        // initialize bar
+        super.start(total, startValue, payload);
+
+        // redraw on start!
+        this.render();
+    }
+
+    // stop the bar
+    stop(){
+        // timer inactive ?
+        if (!this.timer) {
+            return;
+        }
+
+        // trigger final rendering
+        this.render();
+
+        // restore state
+        super.stop();
+
+        // stop timer
+        clearTimeout(this.timer);
+        this.timer = null;
+
+        // cursor hidden ?
+        if (this.options.hideCursor === true){
+            this.terminal.cursor(true);
+        }
+
+        // re-enable line wrapping ?
+        if (this.options.linewrap === false){
+            this.terminal.lineWrapping(true);
+        }
+
+        // restore cursor on complete (position + settings)
+        this.terminal.cursorRestore();
+
+        // clear line on complete ?
+        if (this.options.clearOnComplete){
+            this.terminal.cursorTo(0, null);
+            this.terminal.clearLine();
+        }else{
+            // new line on complete
+            this.terminal.newline();
+        }
+    }
+}
 
 /***/ }),
 
@@ -176,6 +477,119 @@ function onceStrict (fn) {
   return f
 }
 
+
+/***/ }),
+
+/***/ 52:
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+const _stringWidth = __webpack_require__(208);
+const _defaultFormatValue = __webpack_require__(338);
+const _defaultFormatBar = __webpack_require__(884);
+const _defaultFormatTime = __webpack_require__(472);
+
+// generic formatter
+module.exports = function defaultFormatter(options, params, payload){
+
+    // copy format string
+    let s = options.format;
+
+    // custom time format set ?
+    const formatTime = options.formatTime || _defaultFormatTime;
+    
+    // custom value format set ?
+    const formatValue = options.formatValue || _defaultFormatValue;
+
+    // custom bar format set ?
+    const formatBar = options.formatBar || _defaultFormatBar;
+
+    // calculate progress in percent
+    const percentage =  Math.floor(params.progress*100) + '';
+
+    // bar stopped and stopTime set ?
+    const stopTime = params.stopTime || Date.now();
+
+    // calculate elapsed time
+    const elapsedTime = Math.round((stopTime - params.startTime)/1000);
+
+    // merges data from payload and calculated
+    const context = Object.assign({}, payload, {
+        bar:                    formatBar(params.progress, options),
+
+        percentage:             formatValue(percentage, options, 'percentage'),
+        total:                  formatValue(params.total, options, 'total'),
+        value:                  formatValue(params.value, options, 'value'),
+
+        eta:                    formatValue(params.eta, options, 'eta'),
+        eta_formatted:          formatTime(params.eta, options, 5),
+        
+        duration:               formatValue(elapsedTime, options, 'duration'),
+        duration_formatted:     formatTime(elapsedTime, options, 1)
+    });
+
+    // assign placeholder tokens
+    s = s.replace(/\{(\w+)\}/g, function(match, key){
+        // key exists within payload/context
+        if (typeof context[key] !== 'undefined') {
+            return context[key];
+        }
+
+        // no changes to unknown values
+        return match;
+    });
+
+    // calculate available whitespace (2 characters margin of error)
+    const fullMargin = Math.max(0, params.maxWidth - _stringWidth(s) -2);
+    const halfMargin = Math.floor(fullMargin / 2);
+
+    // distribute available whitespace according to position
+    switch (options.align) {
+
+        // fill start-of-line with whitespaces
+        case 'right':
+            s = (fullMargin > 0) ? ' '.repeat(fullMargin) + s : s;
+            break;
+
+        // distribute whitespaces to left+right
+        case 'center':
+            s = (halfMargin > 0) ? ' '.repeat(halfMargin) + s : s;
+            break;
+
+        // default: left align, no additional whitespaces
+        case 'left':
+        default:
+            break;
+    }
+
+    return s;
+}
+
+
+/***/ }),
+
+/***/ 56:
+/***/ (function(module) {
+
+module.exports = function(colors) {
+  // RoY G BiV
+  var rainbowColors = ['red', 'yellow', 'green', 'blue', 'magenta'];
+  return function(letter, i, exploded) {
+    if (letter === ' ') {
+      return letter;
+    } else {
+      return colors[rainbowColors[i++ % rainbowColors.length]](letter);
+    }
+  };
+};
+
+
+
+/***/ }),
+
+/***/ 58:
+/***/ (function(module) {
+
+module.exports = require("readline");
 
 /***/ }),
 
@@ -396,6 +810,18 @@ exports.toCommandValue = toCommandValue;
 /***/ (function(module) {
 
 module.exports = require("os");
+
+/***/ }),
+
+/***/ 90:
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+"use strict";
+
+const ansiRegex = __webpack_require__(436);
+
+module.exports = string => typeof string === 'string' ? string.replace(ansiRegex(), '') : string;
+
 
 /***/ }),
 
@@ -1329,6 +1755,18 @@ function regExpEscape (s) {
 
 /***/ }),
 
+/***/ 98:
+/***/ (function(module) {
+
+// cli-progress legacy style as of 1.x
+module.exports = {
+    format: 'progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}',
+    barCompleteChar: '=',
+    barIncompleteChar: '-'
+};
+
+/***/ }),
+
 /***/ 102:
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
 
@@ -1370,24 +1808,14 @@ exports.issueCommand = issueCommand;
 
 
 const { ClientError, logger } = __webpack_require__(79);
-const {
-  getAction,
-  getScope,
-  getRecursive
-} = __webpack_require__(933);
+const { getAction, getScope } = __webpack_require__(933);
 const { addScope } = __webpack_require__(655);
-const {
-  getListPackageJsonFiles
-} = __webpack_require__(600);
 
 __webpack_require__(63).config();
 
 async function main() {
   if (getAction() === "name") {
-    addScope(
-      getScope(),
-      getRecursive() ? getListPackageJsonFiles() : ["./package.json"]
-    );
+    addScope(getScope());
   } else {
     throw new Error(
       `flow type input value '${getAction()}' is not supported. Please check documentation.`
@@ -1408,6 +1836,49 @@ if (require.main === require.cache[eval('__filename')]) {
 }
 
 module.exports = { main };
+
+
+/***/ }),
+
+/***/ 115:
+/***/ (function(module) {
+
+"use strict";
+/*
+MIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+
+
+module.exports = function(flag, argv) {
+  argv = argv || process.argv;
+
+  var terminatorPos = argv.indexOf('--');
+  var prefix = /^-{1,2}/.test(flag) ? '' : '--';
+  var pos = argv.indexOf(prefix + flag);
+
+  return pos !== -1 && (terminatorPos === -1 ? true : pos < terminatorPos);
+};
 
 
 /***/ }),
@@ -1734,6 +2205,431 @@ module.exports = { replace };
 
 /***/ }),
 
+/***/ 194:
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+const _readline = __webpack_require__(58);
+
+// low-level terminal interactions
+class Terminal{
+
+    constructor(outputStream){
+        this.stream = outputStream;
+
+        // default: line wrapping enabled
+        this.linewrap = true;
+
+        // current, relative y position
+        this.dy = 0;
+    }
+
+    // save cursor position + settings
+    cursorSave(){
+        if (!this.stream.isTTY){
+            return;
+        }
+
+        // save position
+        this.stream.write('\x1B7');
+    }
+
+    // restore last cursor position + settings
+    cursorRestore(){
+        if (!this.stream.isTTY){
+            return;
+        }
+
+        // restore cursor
+        this.stream.write('\x1B8');
+    }
+
+    // show/hide cursor
+    cursor(enabled){
+        if (!this.stream.isTTY){
+            return;
+        }
+
+        if (enabled){
+            this.stream.write('\x1B[?25h');
+        }else{
+            this.stream.write('\x1B[?25l');
+        }
+    }
+
+    // change cursor positionn
+    cursorTo(x=null, y=null){
+        if (!this.stream.isTTY){
+            return;
+        }
+
+        // move cursor absolute
+        _readline.cursorTo(this.stream, x, y);
+    }
+
+    // change relative cursor position
+    cursorRelative(dx=null, dy=null){
+        if (!this.stream.isTTY){
+            return;
+        }
+
+        // store current position
+        this.dy = this.dy + dy;
+        
+        // move cursor relative
+        _readline.moveCursor(this.stream, dx, dy);
+    }
+
+    // relative reset
+    cursorRelativeReset(){
+        if (!this.stream.isTTY){
+            return;
+        }
+
+        // move cursor to initial line
+        _readline.moveCursor(this.stream, 0, -this.dy);
+
+        // first char
+        _readline.cursorTo(this.stream, 0, null);
+
+        // reset counter
+        this.dy = 0;
+    }
+
+    // clear to the right from cursor
+    clearRight(){
+        if (!this.stream.isTTY){
+            return;
+        }
+
+        _readline.clearLine(this.stream, 1);
+    }
+
+    // clear the full line
+    clearLine(){
+        if (!this.stream.isTTY){
+            return;
+        }
+
+        _readline.clearLine(this.stream, 0);
+    }
+
+    // clear everyting beyond the current line
+    clearBottom(){
+        if (!this.stream.isTTY){
+            return;
+        }
+
+        _readline.clearScreenDown(this.stream);
+    }
+
+    // add new line; increment counter
+    newline(){
+        this.stream.write('\n');
+        this.dy++;
+    }
+
+    // write content to output stream
+    // @TODO use string-width to strip length
+    write(s){
+        // line wrapping enabled ? trim output
+        if (this.linewrap === true){
+            this.stream.write(s.substr(0, this.getWidth()));
+        }else{
+            this.stream.write(s);
+        }
+    }
+
+    // control line wrapping
+    lineWrapping(enabled){
+        if (!this.stream.isTTY){
+            return;
+        }
+
+        // store state
+        this.linewrap = enabled;
+        if (enabled){
+            this.stream.write('\x1B[?7h');
+        }else{
+            this.stream.write('\x1B[?7l');
+        }
+    }
+
+    // tty environment ?
+    isTTY(){
+        return (this.stream.isTTY === true);
+    }
+
+    // get terminal width
+    getWidth(){
+        // set max width to 80 in tty-mode and 200 in notty-mode
+        return this.stream.columns || (this.stream.isTTY ? 80 : 200);
+    }
+}
+
+module.exports = Terminal;
+
+
+/***/ }),
+
+/***/ 200:
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+const _Terminal = __webpack_require__(194);
+const _BarElement = __webpack_require__(952);
+const _options = __webpack_require__(469);
+const _EventEmitter = __webpack_require__(614);
+
+// Progress-Bar constructor
+module.exports = class MultiBar extends _EventEmitter{
+
+    constructor(options, preset){
+        super();
+
+        // list of bars
+        this.bars = [];
+
+        // parse+store options
+        this.options = _options.parse(options, preset);
+
+        // disable synchronous updates
+        this.options.synchronousUpdate = false;
+
+        // store terminal instance
+        this.terminal = (this.options.terminal) ? this.options.terminal : new _Terminal(this.options.stream);
+
+        // the update timer
+        this.timer = null;
+
+        // progress bar active ?
+        this.isActive = false;
+
+        // update interval
+        this.schedulingRate = (this.terminal.isTTY() ? this.options.throttleTime : this.options.notTTYSchedule);
+    }
+
+    // add a new bar to the stack
+    create(total, startValue, payload){
+        // progress updates are only visible in TTY mode!
+        if (this.options.noTTYOutput === false && this.terminal.isTTY() === false){
+            return;
+        }
+        
+        // create new bar element
+        const bar = new _BarElement(this.options);
+
+        // store bar
+        this.bars.push(bar);
+
+        // multiprogress already active ?
+        if (!this.isActive){
+            // hide the cursor ?
+            if (this.options.hideCursor === true){
+                this.terminal.cursor(false);
+            }
+
+            // disable line wrapping ?
+            if (this.options.linewrap === false){
+                this.terminal.lineWrapping(false);
+            }
+    
+            // initialize update timer
+            this.timer = setTimeout(this.update.bind(this), this.schedulingRate);
+        }
+
+        // set flag
+        this.isActive = true;
+
+        // start progress bar
+        bar.start(total, startValue, payload);
+
+        // trigger event
+        this.emit('start');
+
+        // return new instance
+        return bar;
+    }
+
+    // remove a bar from the stack
+    remove(bar){
+        // find element
+        const index = this.bars.indexOf(bar);
+
+        // element found ?
+        if (index < 0){
+            return false;
+        }
+
+        // remove element
+        this.bars.splice(index, 1);
+
+        // force update
+        this.update();
+
+        // clear bottom
+        this.terminal.newline();
+        this.terminal.clearBottom();
+
+        return true;
+    }
+
+    // internal update routine
+    update(){
+        // stop timer
+        if (this.timer){
+            clearTimeout(this.timer);
+            this.timer = null;
+        }
+
+        // trigger event
+        this.emit('update-pre');
+        
+        // reset cursor
+        this.terminal.cursorRelativeReset();
+
+        // trigger event
+        this.emit('redraw-pre');
+
+        // update each bar
+        for (let i=0; i< this.bars.length; i++){
+            // add new line ?
+            if (i > 0){
+                this.terminal.newline();
+            }
+
+            // render
+            this.bars[i].render();
+        }
+
+        // trigger event
+        this.emit('redraw-post');
+
+        // add new line in notty mode!
+        if (this.options.noTTYOutput && this.terminal.isTTY() === false){
+            this.terminal.newline();
+            this.terminal.newline();
+        }
+
+        // next update
+        this.timer = setTimeout(this.update.bind(this), this.schedulingRate);
+
+        // trigger event
+        this.emit('update-post');
+
+        // stop if stopOnComplete and all bars stopped
+        if (this.options.stopOnComplete && !this.bars.find(bar => bar.isActive)) {
+            this.stop();
+        }
+    }
+
+    stop(){
+
+        // stop timer
+        clearTimeout(this.timer);
+        this.timer = null;
+
+        // set flag
+        this.isActive = false;
+
+        // cursor hidden ?
+        if (this.options.hideCursor === true){
+            this.terminal.cursor(true);
+        }
+
+        // re-enable line wrpaping ?
+        if (this.options.linewrap === false){
+            this.terminal.lineWrapping(true);
+        }
+
+        // reset cursor
+        this.terminal.cursorRelativeReset();
+
+        // trigger event
+        this.emit('stop-pre-clear');
+
+        // clear line on complete ?
+        if (this.options.clearOnComplete){
+            // clear all bars
+            this.terminal.clearBottom();
+            
+        // or show final progress ?
+        }else{
+            // update each bar
+            for (let i=0; i< this.bars.length; i++){
+                // add new line ?
+                if (i > 0){
+                    this.terminal.newline();
+                }
+
+                // trigger final rendering
+                this.bars[i].render();
+
+                // stop
+                this.bars[i].stop();
+            }
+
+            // new line on complete
+            this.terminal.newline();
+        }
+
+        // trigger event
+        this.emit('stop');
+    }
+}
+
+
+/***/ }),
+
+/***/ 208:
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+"use strict";
+
+const stripAnsi = __webpack_require__(90);
+const isFullwidthCodePoint = __webpack_require__(947);
+const emojiRegex = __webpack_require__(920);
+
+const stringWidth = string => {
+	string = string.replace(emojiRegex(), '  ');
+
+	if (typeof string !== 'string' || string.length === 0) {
+		return 0;
+	}
+
+	string = stripAnsi(string);
+
+	let width = 0;
+
+	for (let i = 0; i < string.length; i++) {
+		const code = string.codePointAt(i);
+
+		// Ignore control characters
+		if (code <= 0x1F || (code >= 0x7F && code <= 0x9F)) {
+			continue;
+		}
+
+		// Ignore combining characters
+		if (code >= 0x300 && code <= 0x36F) {
+			continue;
+		}
+
+		// Surrogates
+		if (code > 0xFFFF) {
+			i++;
+		}
+
+		width += isFullwidthCodePoint(code) ? 2 : 1;
+	}
+
+	return width;
+};
+
+module.exports = stringWidth;
+// TODO: remove this in the next major version
+module.exports.default = stringWidth;
+
+
+/***/ }),
+
 /***/ 209:
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
@@ -1743,8 +2639,10 @@ function replace(fileContent, replacementMap) {
   return eol
     .split(fileContent)
     .map(line => treatRequire(line, replacementMap))
+    .map(line => treatRequireActual(line, replacementMap))
     .map(line => treatImport(line, replacementMap))
     .map(line => treatNodeModules(line, replacementMap))
+    .map(line => treatJest(line, replacementMap))
     .join(eol.auto);
 }
 
@@ -1756,16 +2654,32 @@ function treatRequire(line, replacementMap) {
   );
 }
 
+function treatRequireActual(line, replacementMap) {
+  return treatRegEx(
+    line,
+    replacementMap,
+    `(require\\.requireActual\\(["|'])($KEY)(.*["|']\\))(;)?`
+  );
+}
+
 function treatImport(line, replacementMap) {
   return treatRegEx(
     line,
     replacementMap,
-    `(import { .* } from ["|'])($KEY)(.*["|'])(;)?`
+    `((})? from ["|'])($KEY)(.*["|'])(;)?`
   );
 }
 
 function treatNodeModules(line, replacementMap) {
   return treatRegEx(line, replacementMap, `(node_modules/)($KEY)(.*)(;)?`);
+}
+
+function treatJest(line, replacementMap) {
+  return treatRegEx(
+    line,
+    replacementMap,
+    `(jest.mock\\(["|'])($KEY)(.*["|'])(;)?`
+  );
 }
 
 function treatRegEx(line, replacementMap, regEx) {
@@ -1783,6 +2697,23 @@ function escapeForRegExp(str) {
 }
 
 module.exports = { replace };
+
+
+/***/ }),
+
+/***/ 216:
+/***/ (function(module) {
+
+module.exports = function(colors) {
+  return function(letter, i, exploded) {
+    if (letter === ' ') return letter;
+    switch (i%3) {
+      case 0: return colors.red(letter);
+      case 1: return colors.white(letter);
+      case 2: return colors.blue(letter);
+    }
+  };
+};
 
 
 /***/ }),
@@ -2301,12 +3232,41 @@ GlobSync.prototype._makeAbs = function (f) {
 
 const glob = __webpack_require__(402);
 
-function getListPackageJsonFiles(options = { ignore: "node_modules/**" }) {
-  return glob.sync("**/package.json", options);
+function getListPackageJsonFiles(
+  options = { ignore: "**/node_modules/**", additionalIgnorePatterns: [] }
+) {
+  const filePaths = glob.sync("**/package.json", options);
+  return options.additionalIgnorePatterns &&
+    options.additionalIgnorePatterns.length > 0
+    ? filePaths.filter(
+        filePath =>
+          !options.additionalIgnorePatterns.find(regex =>
+            filePath.match(new RegExp(regex))
+          )
+      )
+    : filePaths;
 }
 
-function getFileList(options = { ignore: "node_modules/**" }) {
-  return glob.sync("**/*.ts | **/*.tsx | **/package.json | **/*.js", options);
+async function getFileList(options = { ignore: "**/node_modules/**" }) {
+  const patterns = ["**/*.ts", "**/*.tsx", "**/package.json", "**/*.js"];
+  return (
+    await Promise.all(
+      patterns.map(
+        pattern =>
+          new Promise((resolve, reject) => {
+            glob(pattern, options, (err, matches) => {
+              if (!err && options.strict && matches.length === 0) {
+                reject(new Error("'" + pattern + "' matched no files"));
+              } else if (err) {
+                reject(err);
+              } else {
+                resolve(matches);
+              }
+            });
+          })
+      )
+    )
+  ).flat();
 }
 
 module.exports = { getListPackageJsonFiles, getFileList };
@@ -2629,10 +3589,58 @@ if (typeof Object.create === 'function') {
 
 /***/ }),
 
+/***/ 338:
+/***/ (function(module) {
+
+// default value format (apply autopadding)
+
+// format valueset
+module.exports = function formatValue(v, options, type){
+    // no autopadding ? passthrough
+    if (options.autopadding !== true){
+        return v;
+    }
+
+    // padding
+    function autopadding(value, length){
+        return (options.autopaddingChar + value).slice(-length);
+    }
+
+    switch (type){
+        case 'percentage':
+            return autopadding(v, 3);
+
+        default:
+            return v;
+    }
+}
+
+/***/ }),
+
 /***/ 357:
 /***/ (function(module) {
 
 module.exports = require("assert");
+
+/***/ }),
+
+/***/ 377:
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+var colors = __webpack_require__(464);
+module.exports = colors;
+
+// Remark: By default, colors will add style properties to String.prototype.
+//
+// If you don't wish to extend String.prototype, you can do this instead and
+// native String will not be touched:
+//
+//   var colors = require('colors/safe);
+//   colors.red("foo")
+//
+//
+__webpack_require__(32)();
+
 
 /***/ }),
 
@@ -3519,6 +4527,343 @@ function escapeProperty(s) {
 
 /***/ }),
 
+/***/ 436:
+/***/ (function(module) {
+
+"use strict";
+
+
+module.exports = ({onlyFirst = false} = {}) => {
+	const pattern = [
+		'[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
+		'(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))'
+	].join('|');
+
+	return new RegExp(pattern, onlyFirst ? undefined : 'g');
+};
+
+
+/***/ }),
+
+/***/ 464:
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+/*
+
+The MIT License (MIT)
+
+Original Library
+  - Copyright (c) Marak Squires
+
+Additional functionality
+ - Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+*/
+
+var colors = {};
+module.exports = colors;
+
+colors.themes = {};
+
+var util = __webpack_require__(669);
+var ansiStyles = colors.styles = __webpack_require__(586);
+var defineProps = Object.defineProperties;
+var newLineRegex = new RegExp(/[\r\n]+/g);
+
+colors.supportsColor = __webpack_require__(729).supportsColor;
+
+if (typeof colors.enabled === 'undefined') {
+  colors.enabled = colors.supportsColor() !== false;
+}
+
+colors.enable = function() {
+  colors.enabled = true;
+};
+
+colors.disable = function() {
+  colors.enabled = false;
+};
+
+colors.stripColors = colors.strip = function(str) {
+  return ('' + str).replace(/\x1B\[\d+m/g, '');
+};
+
+// eslint-disable-next-line no-unused-vars
+var stylize = colors.stylize = function stylize(str, style) {
+  if (!colors.enabled) {
+    return str+'';
+  }
+
+  var styleMap = ansiStyles[style];
+
+  // Stylize should work for non-ANSI styles, too
+  if(!styleMap && style in colors){
+    // Style maps like trap operate as functions on strings;
+    // they don't have properties like open or close.
+    return colors[style](str);
+  }
+
+  return styleMap.open + str + styleMap.close;
+};
+
+var matchOperatorsRe = /[|\\{}()[\]^$+*?.]/g;
+var escapeStringRegexp = function(str) {
+  if (typeof str !== 'string') {
+    throw new TypeError('Expected a string');
+  }
+  return str.replace(matchOperatorsRe, '\\$&');
+};
+
+function build(_styles) {
+  var builder = function builder() {
+    return applyStyle.apply(builder, arguments);
+  };
+  builder._styles = _styles;
+  // __proto__ is used because we must return a function, but there is
+  // no way to create a function with a different prototype.
+  builder.__proto__ = proto;
+  return builder;
+}
+
+var styles = (function() {
+  var ret = {};
+  ansiStyles.grey = ansiStyles.gray;
+  Object.keys(ansiStyles).forEach(function(key) {
+    ansiStyles[key].closeRe =
+      new RegExp(escapeStringRegexp(ansiStyles[key].close), 'g');
+    ret[key] = {
+      get: function() {
+        return build(this._styles.concat(key));
+      },
+    };
+  });
+  return ret;
+})();
+
+var proto = defineProps(function colors() {}, styles);
+
+function applyStyle() {
+  var args = Array.prototype.slice.call(arguments);
+
+  var str = args.map(function(arg) {
+    // Use weak equality check so we can colorize null/undefined in safe mode
+    if (arg != null && arg.constructor === String) {
+      return arg;
+    } else {
+      return util.inspect(arg);
+    }
+  }).join(' ');
+
+  if (!colors.enabled || !str) {
+    return str;
+  }
+
+  var newLinesPresent = str.indexOf('\n') != -1;
+
+  var nestedStyles = this._styles;
+
+  var i = nestedStyles.length;
+  while (i--) {
+    var code = ansiStyles[nestedStyles[i]];
+    str = code.open + str.replace(code.closeRe, code.open) + code.close;
+    if (newLinesPresent) {
+      str = str.replace(newLineRegex, function(match) {
+        return code.close + match + code.open;
+      });
+    }
+  }
+
+  return str;
+}
+
+colors.setTheme = function(theme) {
+  if (typeof theme === 'string') {
+    console.log('colors.setTheme now only accepts an object, not a string.  ' +
+      'If you are trying to set a theme from a file, it is now your (the ' +
+      'caller\'s) responsibility to require the file.  The old syntax ' +
+      'looked like colors.setTheme(__dirname + ' +
+      '\'/../themes/generic-logging.js\'); The new syntax looks like '+
+      'colors.setTheme(require(__dirname + ' +
+      '\'/../themes/generic-logging.js\'));');
+    return;
+  }
+  for (var style in theme) {
+    (function(style) {
+      colors[style] = function(str) {
+        if (typeof theme[style] === 'object') {
+          var out = str;
+          for (var i in theme[style]) {
+            out = colors[theme[style][i]](out);
+          }
+          return out;
+        }
+        return colors[theme[style]](str);
+      };
+    })(style);
+  }
+};
+
+function init() {
+  var ret = {};
+  Object.keys(styles).forEach(function(name) {
+    ret[name] = {
+      get: function() {
+        return build([name]);
+      },
+    };
+  });
+  return ret;
+}
+
+var sequencer = function sequencer(map, str) {
+  var exploded = str.split('');
+  exploded = exploded.map(map);
+  return exploded.join('');
+};
+
+// custom formatter methods
+colors.trap = __webpack_require__(16);
+colors.zalgo = __webpack_require__(640);
+
+// maps
+colors.maps = {};
+colors.maps.america = __webpack_require__(216)(colors);
+colors.maps.zebra = __webpack_require__(732)(colors);
+colors.maps.rainbow = __webpack_require__(56)(colors);
+colors.maps.random = __webpack_require__(961)(colors);
+
+for (var map in colors.maps) {
+  (function(map) {
+    colors[map] = function(str) {
+      return sequencer(colors.maps[map], str);
+    };
+  })(map);
+}
+
+defineProps(colors, init());
+
+
+/***/ }),
+
+/***/ 469:
+/***/ (function(module) {
+
+// utility to merge defaults
+function mergeOption(v, defaultValue){
+    if (typeof v === 'undefined' || v === null){
+        return defaultValue;
+    }else{
+        return v;
+    }
+}
+
+module.exports = {
+    // set global options
+    parse: function parse(rawOptions, preset){
+
+        // options storage
+        const options = {};
+
+        // merge preset
+        const opt = Object.assign({}, preset, rawOptions);
+
+        // the max update rate in fps (redraw will only triggered on value change)
+        options.throttleTime = 1000 / (mergeOption(opt.fps, 10));
+
+        // the output stream to write on
+        options.stream = mergeOption(opt.stream, process.stderr);
+
+        // external terminal provided ?
+        options.terminal = mergeOption(opt.terminal, null);
+
+        // clear on finish ?
+        options.clearOnComplete = mergeOption(opt.clearOnComplete, false);
+
+        // stop on finish ?
+        options.stopOnComplete = mergeOption(opt.stopOnComplete, false);
+
+        // size of the progressbar in chars
+        options.barsize = mergeOption(opt.barsize, 40);
+
+        // position of the progress bar - 'left' (default), 'right' or 'center'
+        options.align = mergeOption(opt.align, 'left');
+
+        // hide the cursor ?
+        options.hideCursor = mergeOption(opt.hideCursor, false);
+
+        // disable linewrapping ?
+        options.linewrap = mergeOption(opt.linewrap, false);
+
+        // pre-render bar strings (performance)
+        options.barCompleteString = (new Array(options.barsize + 1 ).join(opt.barCompleteChar || '='));
+        options.barIncompleteString = (new Array(options.barsize + 1 ).join(opt.barIncompleteChar || '-'));
+
+        // glue sequence (control chars) between bar elements ?
+        options.barGlue = mergeOption(opt.barGlue, '');
+
+        // the bar format
+        options.format = mergeOption(opt.format, 'progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}');
+
+        // external time-format provided ?
+        options.formatTime = mergeOption(opt.formatTime, null);
+
+        // external value-format provided ?
+        options.formatValue = mergeOption(opt.formatValue, null);
+
+        // external bar-format provided ?
+        options.formatBar = mergeOption(opt.formatBar, null);
+
+        // the number of results to average ETA over
+        options.etaBufferLength = mergeOption(opt.etaBuffer, 10);
+
+        // automatic eta updates based on fps
+        options.etaAsynchronousUpdate = mergeOption(opt.etaAsynchronousUpdate, false);
+
+        // allow synchronous updates ?
+        options.synchronousUpdate = mergeOption(opt.synchronousUpdate, true);
+
+        // notty mode
+        options.noTTYOutput = mergeOption(opt.noTTYOutput, false);
+
+        // schedule - 2s
+        options.notTTYSchedule = mergeOption(opt.notTTYSchedule, 2000);
+        
+        // emptyOnZero - false
+        options.emptyOnZero = mergeOption(opt.emptyOnZero, false);
+
+        // force bar redraw even if progress did not change
+        options.forceRedraw = mergeOption(opt.forceRedraw, false);
+
+        // automated padding to fixed width ?
+        options.autopadding = mergeOption(opt.autopadding, false);
+
+        // autopadding character - empty in case autopadding is disabled
+        options.autopaddingChar = options.autopadding ? mergeOption(opt.autopaddingChar, '   ') : '';
+
+        return options;
+    }
+};
+
+/***/ }),
+
 /***/ 470:
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
 
@@ -3764,10 +5109,240 @@ exports.getState = getState;
 
 /***/ }),
 
-/***/ 600:
+/***/ 472:
 /***/ (function(module) {
 
-module.exports = eval("require")("./src/lib/util/package-json-utils");
+// default time format
+
+// format a number of seconds into hours and minutes as appropriate
+module.exports = function formatTime(t, options, roundToMultipleOf){
+    function round(input) {
+        if (roundToMultipleOf) {
+            return roundToMultipleOf * Math.round(input / roundToMultipleOf);
+        } else {
+            return input
+        }
+    }
+
+    // leading zero padding
+    function autopadding(v){
+        return (options.autopaddingChar + v).slice(-2);
+    }
+
+    // > 1h ?
+    if (t > 3600) {
+        return autopadding(Math.floor(t / 3600)) + 'h' + autopadding(round((t % 3600) / 60)) + 'm';
+
+    // > 60s ?
+    } else if (t > 60) {
+        return autopadding(Math.floor(t / 60)) + 'm' + autopadding(round((t % 60))) + 's';
+
+    // > 10s ?
+    } else if (t > 10) {
+        return autopadding(round(t)) + 's';
+
+    // default: don't apply round to multiple
+    }else{
+        return autopadding(t) + 's';
+    }
+}
+
+/***/ }),
+
+/***/ 480:
+/***/ (function(module) {
+
+
+// ETA calculation
+class ETA{
+
+    constructor(length, initTime, initValue){
+        // size of eta buffer
+        this.etaBufferLength = length || 100;
+
+        // eta buffer with initial values
+        this.valueBuffer = [initValue];
+        this.timeBuffer = [initTime];
+
+        // eta time value
+        this.eta = '0';
+    }
+
+    // add new values to calculation buffer
+    update(time, value, total){
+        this.valueBuffer.push(value);
+        this.timeBuffer.push(time);
+
+        // trigger recalculation
+        this.calculate(total-value);
+    }
+
+    // fetch estimated time
+    getTime(){
+        return this.eta;
+    }
+
+    // eta calculation - request number of remaining events
+    calculate(remaining){
+        // get number of samples in eta buffer
+        const currentBufferSize = this.valueBuffer.length;
+        const buffer = Math.min(this.etaBufferLength, currentBufferSize);
+
+        const v_diff = this.valueBuffer[currentBufferSize - 1] - this.valueBuffer[currentBufferSize - buffer];
+        const t_diff = this.timeBuffer[currentBufferSize - 1] - this.timeBuffer[currentBufferSize - buffer];
+
+        // get progress per ms
+        const vt_rate = v_diff/t_diff;
+
+        // strip past elements
+        this.valueBuffer = this.valueBuffer.slice(-this.etaBufferLength);
+        this.timeBuffer  = this.timeBuffer.slice(-this.etaBufferLength);
+
+        // eq: vt_rate *x = total
+        const eta = Math.ceil(remaining/vt_rate/1000);
+
+        // check values
+        if (isNaN(eta)){
+            this.eta = 'NULL';
+
+        // +/- Infinity --- NaN already handled
+        }else if (!isFinite(eta)){
+            this.eta = 'INF';
+
+        // > 100k s ?
+        }else if (eta > 100000){
+            this.eta = 'INF';
+
+        // negative ?
+        }else if (eta < 0){
+            this.eta = 0;
+
+        }else{
+            // assign
+            this.eta = eta;
+        }
+    }
+}
+
+module.exports = ETA;
+
+/***/ }),
+
+/***/ 491:
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+const _legacy = __webpack_require__(98);
+const _shades_classic = __webpack_require__(736);
+const _shades_grey = __webpack_require__(691);
+const _rect = __webpack_require__(746);
+
+module.exports = {
+    legacy: _legacy,
+    shades_classic: _shades_classic,
+    shades_grey: _shades_grey,
+    rect: _rect
+};
+
+/***/ }),
+
+/***/ 586:
+/***/ (function(module) {
+
+/*
+The MIT License (MIT)
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+*/
+
+var styles = {};
+module.exports = styles;
+
+var codes = {
+  reset: [0, 0],
+
+  bold: [1, 22],
+  dim: [2, 22],
+  italic: [3, 23],
+  underline: [4, 24],
+  inverse: [7, 27],
+  hidden: [8, 28],
+  strikethrough: [9, 29],
+
+  black: [30, 39],
+  red: [31, 39],
+  green: [32, 39],
+  yellow: [33, 39],
+  blue: [34, 39],
+  magenta: [35, 39],
+  cyan: [36, 39],
+  white: [37, 39],
+  gray: [90, 39],
+  grey: [90, 39],
+
+  brightRed: [91, 39],
+  brightGreen: [92, 39],
+  brightYellow: [93, 39],
+  brightBlue: [94, 39],
+  brightMagenta: [95, 39],
+  brightCyan: [96, 39],
+  brightWhite: [97, 39],
+
+  bgBlack: [40, 49],
+  bgRed: [41, 49],
+  bgGreen: [42, 49],
+  bgYellow: [43, 49],
+  bgBlue: [44, 49],
+  bgMagenta: [45, 49],
+  bgCyan: [46, 49],
+  bgWhite: [47, 49],
+  bgGray: [100, 49],
+  bgGrey: [100, 49],
+
+  bgBrightRed: [101, 49],
+  bgBrightGreen: [102, 49],
+  bgBrightYellow: [103, 49],
+  bgBrightBlue: [104, 49],
+  bgBrightMagenta: [105, 49],
+  bgBrightCyan: [106, 49],
+  bgBrightWhite: [107, 49],
+
+  // legacy styles for colors pre v1.0.0
+  blackBG: [40, 49],
+  redBG: [41, 49],
+  greenBG: [42, 49],
+  yellowBG: [43, 49],
+  blueBG: [44, 49],
+  magentaBG: [45, 49],
+  cyanBG: [46, 49],
+  whiteBG: [47, 49],
+
+};
+
+Object.keys(codes).forEach(function(key) {
+  var val = codes[key];
+  var style = styles[key] = [];
+  style.open = '\u001b[' + val[0] + 'm';
+  style.close = '\u001b[' + val[1] + 'm';
+});
 
 
 /***/ }),
@@ -3853,12 +5428,127 @@ module.exports = require("path");
 
 /***/ }),
 
+/***/ 640:
+/***/ (function(module) {
+
+// please no
+module.exports = function zalgo(text, options) {
+  text = text || '   he is here   ';
+  var soul = {
+    'up': [
+      '̍', '̎', '̄', '̅',
+      '̿', '̑', '̆', '̐',
+      '͒', '͗', '͑', '̇',
+      '̈', '̊', '͂', '̓',
+      '̈', '͊', '͋', '͌',
+      '̃', '̂', '̌', '͐',
+      '̀', '́', '̋', '̏',
+      '̒', '̓', '̔', '̽',
+      '̉', 'ͣ', 'ͤ', 'ͥ',
+      'ͦ', 'ͧ', 'ͨ', 'ͩ',
+      'ͪ', 'ͫ', 'ͬ', 'ͭ',
+      'ͮ', 'ͯ', '̾', '͛',
+      '͆', '̚',
+    ],
+    'down': [
+      '̖', '̗', '̘', '̙',
+      '̜', '̝', '̞', '̟',
+      '̠', '̤', '̥', '̦',
+      '̩', '̪', '̫', '̬',
+      '̭', '̮', '̯', '̰',
+      '̱', '̲', '̳', '̹',
+      '̺', '̻', '̼', 'ͅ',
+      '͇', '͈', '͉', '͍',
+      '͎', '͓', '͔', '͕',
+      '͖', '͙', '͚', '̣',
+    ],
+    'mid': [
+      '̕', '̛', '̀', '́',
+      '͘', '̡', '̢', '̧',
+      '̨', '̴', '̵', '̶',
+      '͜', '͝', '͞',
+      '͟', '͠', '͢', '̸',
+      '̷', '͡', ' ҉',
+    ],
+  };
+  var all = [].concat(soul.up, soul.down, soul.mid);
+
+  function randomNumber(range) {
+    var r = Math.floor(Math.random() * range);
+    return r;
+  }
+
+  function isChar(character) {
+    var bool = false;
+    all.filter(function(i) {
+      bool = (i === character);
+    });
+    return bool;
+  }
+
+
+  function heComes(text, options) {
+    var result = '';
+    var counts;
+    var l;
+    options = options || {};
+    options['up'] =
+      typeof options['up'] !== 'undefined' ? options['up'] : true;
+    options['mid'] =
+      typeof options['mid'] !== 'undefined' ? options['mid'] : true;
+    options['down'] =
+      typeof options['down'] !== 'undefined' ? options['down'] : true;
+    options['size'] =
+      typeof options['size'] !== 'undefined' ? options['size'] : 'maxi';
+    text = text.split('');
+    for (l in text) {
+      if (isChar(l)) {
+        continue;
+      }
+      result = result + text[l];
+      counts = {'up': 0, 'down': 0, 'mid': 0};
+      switch (options.size) {
+        case 'mini':
+          counts.up = randomNumber(8);
+          counts.mid = randomNumber(2);
+          counts.down = randomNumber(8);
+          break;
+        case 'maxi':
+          counts.up = randomNumber(16) + 3;
+          counts.mid = randomNumber(4) + 1;
+          counts.down = randomNumber(64) + 3;
+          break;
+        default:
+          counts.up = randomNumber(8) + 1;
+          counts.mid = randomNumber(6) / 2;
+          counts.down = randomNumber(8) + 1;
+          break;
+      }
+
+      var arr = ['up', 'mid', 'down'];
+      for (var d in arr) {
+        var index = arr[d];
+        for (var i = 0; i <= counts[index]; i++) {
+          if (options[index]) {
+            result = result + soul[index][randomNumber(soul[index].length)];
+          }
+        }
+      }
+    }
+    return result;
+  }
+  // don't summon him
+  return heComes(text, options);
+};
+
+
+
+/***/ }),
+
 /***/ 643:
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
 const path = __webpack_require__(622);
-const { ClientError } = __webpack_require__(79);
-
 const packageJson = __webpack_require__(14);
 const javascript = __webpack_require__(209);
 const none = __webpack_require__(178);
@@ -3891,25 +5581,42 @@ const { getFileReplacement } = __webpack_require__(643);
 
 const fs = __webpack_require__(747);
 const path = __webpack_require__(622);
+const cliProgress = __webpack_require__(927);
 
-function addScope(scopeName) {
+async function addScope(scopeName, options = { ignorePatterns: [] }) {
   const finalScopeName = treatScopeName(scopeName);
-  const replacementMap = getAllProjectNames().reduce((acc, curr) => {
-    acc[curr] = getNewScope(curr, finalScopeName);
-    return acc;
-  }, {});
+  const replacementMap = getAllProjectNames(options.ignorePatterns).reduce(
+    (acc, curr) => {
+      acc[curr] = getNewScope(curr, finalScopeName);
+      return acc;
+    },
+    {}
+  );
 
-  const filesToReplace = getFileList();
-  logger.info(`Replacing ${replacementMap} in ${filesToReplace.length} files`);
+  logger.debug(
+    "Replacement Map",
+    Object.keys(replacementMap).map(key => `${key}:${replacementMap[key]}\n`)
+  );
 
+  logger.info(`Getting files...`);
+  const filesToReplace = await getFileList();
+
+  logger.info(`Replacing files...`);
+  const progressBar = new cliProgress.SingleBar(
+    {
+      stopOnComplete: true,
+      format:
+        "progress [{bar}] {percentage}% | Duration: {duration}s | ETA: {eta}ms | {value}/{total} | {filename}"
+    },
+    cliProgress.Presets.shades_classic
+  );
+  progressBar.start(filesToReplace.length, 0);
   for (const filePath of filesToReplace) {
+    progressBar.increment({ filename: path.basename(filePath) });
     const fileReplacement = getFileReplacement(filePath);
-    const newFileContent = fileReplacement.replace(
-      fs.readFileSync(filePath),
-      replacementMap
-    );
+    const fileContent = fs.readFileSync(filePath, "utf8");
+    const newFileContent = fileReplacement.replace(fileContent, replacementMap);
     fs.writeFileSync(filePath, newFileContent);
-    logger.info(`File ${path.basename(filePath)} replaced.`);
   }
 }
 
@@ -3921,8 +5628,11 @@ function treatScopeName(scopeName) {
   return !scopeName.startsWith("@") ? `@${scopeName}` : scopeName;
 }
 
-function getAllProjectNames() {
-  getListPackageJsonFiles()
+function getAllProjectNames(additionalIgnorePatterns) {
+  return getListPackageJsonFiles({
+    ignore: "**/node_modules/**",
+    additionalIgnorePatterns
+  })
     .map(file => JSON.parse(fs.readFileSync(file)))
     .map(jsonObject => jsonObject.name);
 }
@@ -4041,6 +5751,214 @@ try {
   module.exports = __webpack_require__(315);
 }
 
+
+/***/ }),
+
+/***/ 691:
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+const _colors = __webpack_require__(377);
+
+// cli-progress legacy style as of 1.x
+module.exports = {
+    format: _colors.grey(' {bar}') + ' {percentage}% | ETA: {eta}s | {value}/{total}',
+    barCompleteChar: '\u2588',
+    barIncompleteChar: '\u2591'
+};
+
+/***/ }),
+
+/***/ 729:
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+"use strict";
+/*
+The MIT License (MIT)
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+*/
+
+
+
+var os = __webpack_require__(87);
+var hasFlag = __webpack_require__(115);
+
+var env = process.env;
+
+var forceColor = void 0;
+if (hasFlag('no-color') || hasFlag('no-colors') || hasFlag('color=false')) {
+  forceColor = false;
+} else if (hasFlag('color') || hasFlag('colors') || hasFlag('color=true')
+           || hasFlag('color=always')) {
+  forceColor = true;
+}
+if ('FORCE_COLOR' in env) {
+  forceColor = env.FORCE_COLOR.length === 0
+    || parseInt(env.FORCE_COLOR, 10) !== 0;
+}
+
+function translateLevel(level) {
+  if (level === 0) {
+    return false;
+  }
+
+  return {
+    level: level,
+    hasBasic: true,
+    has256: level >= 2,
+    has16m: level >= 3,
+  };
+}
+
+function supportsColor(stream) {
+  if (forceColor === false) {
+    return 0;
+  }
+
+  if (hasFlag('color=16m') || hasFlag('color=full')
+      || hasFlag('color=truecolor')) {
+    return 3;
+  }
+
+  if (hasFlag('color=256')) {
+    return 2;
+  }
+
+  if (stream && !stream.isTTY && forceColor !== true) {
+    return 0;
+  }
+
+  var min = forceColor ? 1 : 0;
+
+  if (process.platform === 'win32') {
+    // Node.js 7.5.0 is the first version of Node.js to include a patch to
+    // libuv that enables 256 color output on Windows. Anything earlier and it
+    // won't work. However, here we target Node.js 8 at minimum as it is an LTS
+    // release, and Node.js 7 is not. Windows 10 build 10586 is the first
+    // Windows release that supports 256 colors. Windows 10 build 14931 is the
+    // first release that supports 16m/TrueColor.
+    var osRelease = os.release().split('.');
+    if (Number(process.versions.node.split('.')[0]) >= 8
+        && Number(osRelease[0]) >= 10 && Number(osRelease[2]) >= 10586) {
+      return Number(osRelease[2]) >= 14931 ? 3 : 2;
+    }
+
+    return 1;
+  }
+
+  if ('CI' in env) {
+    if (['TRAVIS', 'CIRCLECI', 'APPVEYOR', 'GITLAB_CI'].some(function(sign) {
+      return sign in env;
+    }) || env.CI_NAME === 'codeship') {
+      return 1;
+    }
+
+    return min;
+  }
+
+  if ('TEAMCITY_VERSION' in env) {
+    return (/^(9\.(0*[1-9]\d*)\.|\d{2,}\.)/.test(env.TEAMCITY_VERSION) ? 1 : 0
+    );
+  }
+
+  if ('TERM_PROGRAM' in env) {
+    var version = parseInt((env.TERM_PROGRAM_VERSION || '').split('.')[0], 10);
+
+    switch (env.TERM_PROGRAM) {
+      case 'iTerm.app':
+        return version >= 3 ? 3 : 2;
+      case 'Hyper':
+        return 3;
+      case 'Apple_Terminal':
+        return 2;
+      // No default
+    }
+  }
+
+  if (/-256(color)?$/i.test(env.TERM)) {
+    return 2;
+  }
+
+  if (/^screen|^xterm|^vt100|^rxvt|color|ansi|cygwin|linux/i.test(env.TERM)) {
+    return 1;
+  }
+
+  if ('COLORTERM' in env) {
+    return 1;
+  }
+
+  if (env.TERM === 'dumb') {
+    return min;
+  }
+
+  return min;
+}
+
+function getSupportLevel(stream) {
+  var level = supportsColor(stream);
+  return translateLevel(level);
+}
+
+module.exports = {
+  supportsColor: getSupportLevel,
+  stdout: getSupportLevel(process.stdout),
+  stderr: getSupportLevel(process.stderr),
+};
+
+
+/***/ }),
+
+/***/ 732:
+/***/ (function(module) {
+
+module.exports = function(colors) {
+  return function(letter, i, exploded) {
+    return i % 2 === 0 ? letter : colors.inverse(letter);
+  };
+};
+
+
+/***/ }),
+
+/***/ 736:
+/***/ (function(module) {
+
+// cli-progress legacy style as of 1.x
+module.exports = {
+    format: ' {bar} {percentage}% | ETA: {eta}s | {value}/{total}',
+    barCompleteChar: '\u2588',
+    barIncompleteChar: '\u2591'
+};
+
+/***/ }),
+
+/***/ 746:
+/***/ (function(module) {
+
+module.exports = {
+    format: ' {bar}\u25A0 {percentage}% | ETA: {eta}s | {value}/{total}',
+    barCompleteChar: '\u25A0',
+    barIncompleteChar: ' '
+};
 
 /***/ }),
 
@@ -4305,6 +6223,23 @@ function childrenIgnored (self, path) {
 
 /***/ }),
 
+/***/ 884:
+/***/ (function(module) {
+
+// format bar
+module.exports = function formatBar(progress, options){
+    // calculate barsize
+    const completeSize = Math.round(progress*options.barsize);
+    const incompleteSize = options.barsize-completeSize;
+
+   // generate bar string by stripping the pre-rendered strings
+   return   options.barCompleteString.substr(0, completeSize) +
+            options.barGlue +
+            options.barIncompleteString.substr(0, incompleteSize);
+}
+
+/***/ }),
+
 /***/ 896:
 /***/ (function(module) {
 
@@ -4325,6 +6260,37 @@ var isArray = Array.isArray || function (xs) {
 
 /***/ }),
 
+/***/ 920:
+/***/ (function(module) {
+
+"use strict";
+
+
+module.exports = function () {
+  // https://mths.be/emoji
+  return /\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62(?:\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67|\uDB40\uDC73\uDB40\uDC63\uDB40\uDC74|\uDB40\uDC77\uDB40\uDC6C\uDB40\uDC73)\uDB40\uDC7F|\uD83D\uDC68(?:\uD83C\uDFFC\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68\uD83C\uDFFB|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFF\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB-\uDFFE])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFE\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB-\uDFFD])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFD\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB\uDFFC])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\u200D(?:\u2764\uFE0F\u200D(?:\uD83D\uDC8B\u200D)?\uD83D\uDC68|(?:\uD83D[\uDC68\uDC69])\u200D(?:\uD83D\uDC66\u200D\uD83D\uDC66|\uD83D\uDC67\u200D(?:\uD83D[\uDC66\uDC67]))|\uD83D\uDC66\u200D\uD83D\uDC66|\uD83D\uDC67\u200D(?:\uD83D[\uDC66\uDC67])|(?:\uD83D[\uDC68\uDC69])\u200D(?:\uD83D[\uDC66\uDC67])|[\u2695\u2696\u2708]\uFE0F|\uD83D[\uDC66\uDC67]|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|(?:\uD83C\uDFFB\u200D[\u2695\u2696\u2708]|\uD83C\uDFFF\u200D[\u2695\u2696\u2708]|\uD83C\uDFFE\u200D[\u2695\u2696\u2708]|\uD83C\uDFFD\u200D[\u2695\u2696\u2708]|\uD83C\uDFFC\u200D[\u2695\u2696\u2708])\uFE0F|\uD83C\uDFFB\u200D(?:\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C[\uDFFB-\uDFFF])|(?:\uD83E\uDDD1\uD83C\uDFFB\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1|\uD83D\uDC69\uD83C\uDFFC\u200D\uD83E\uDD1D\u200D\uD83D\uDC69)\uD83C\uDFFB|\uD83E\uDDD1(?:\uD83C\uDFFF\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1(?:\uD83C[\uDFFB-\uDFFF])|\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1)|(?:\uD83E\uDDD1\uD83C\uDFFE\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1|\uD83D\uDC69\uD83C\uDFFF\u200D\uD83E\uDD1D\u200D(?:\uD83D[\uDC68\uDC69]))(?:\uD83C[\uDFFB-\uDFFE])|(?:\uD83E\uDDD1\uD83C\uDFFC\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1|\uD83D\uDC69\uD83C\uDFFD\u200D\uD83E\uDD1D\u200D\uD83D\uDC69)(?:\uD83C[\uDFFB\uDFFC])|\uD83D\uDC69(?:\uD83C\uDFFE\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB-\uDFFD\uDFFF])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFC\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB\uDFFD-\uDFFF])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFB\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFC-\uDFFF])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFD\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\u200D(?:\u2764\uFE0F\u200D(?:\uD83D\uDC8B\u200D(?:\uD83D[\uDC68\uDC69])|\uD83D[\uDC68\uDC69])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFF\u200D(?:\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD]))|\uD83D\uDC69\u200D\uD83D\uDC69\u200D(?:\uD83D\uDC66\u200D\uD83D\uDC66|\uD83D\uDC67\u200D(?:\uD83D[\uDC66\uDC67]))|(?:\uD83E\uDDD1\uD83C\uDFFD\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1|\uD83D\uDC69\uD83C\uDFFE\u200D\uD83E\uDD1D\u200D\uD83D\uDC69)(?:\uD83C[\uDFFB-\uDFFD])|\uD83D\uDC69\u200D\uD83D\uDC66\u200D\uD83D\uDC66|\uD83D\uDC69\u200D\uD83D\uDC69\u200D(?:\uD83D[\uDC66\uDC67])|(?:\uD83D\uDC41\uFE0F\u200D\uD83D\uDDE8|\uD83D\uDC69(?:\uD83C\uDFFF\u200D[\u2695\u2696\u2708]|\uD83C\uDFFE\u200D[\u2695\u2696\u2708]|\uD83C\uDFFC\u200D[\u2695\u2696\u2708]|\uD83C\uDFFB\u200D[\u2695\u2696\u2708]|\uD83C\uDFFD\u200D[\u2695\u2696\u2708]|\u200D[\u2695\u2696\u2708])|(?:(?:\u26F9|\uD83C[\uDFCB\uDFCC]|\uD83D\uDD75)\uFE0F|\uD83D\uDC6F|\uD83E[\uDD3C\uDDDE\uDDDF])\u200D[\u2640\u2642]|(?:\u26F9|\uD83C[\uDFCB\uDFCC]|\uD83D\uDD75)(?:\uD83C[\uDFFB-\uDFFF])\u200D[\u2640\u2642]|(?:\uD83C[\uDFC3\uDFC4\uDFCA]|\uD83D[\uDC6E\uDC71\uDC73\uDC77\uDC81\uDC82\uDC86\uDC87\uDE45-\uDE47\uDE4B\uDE4D\uDE4E\uDEA3\uDEB4-\uDEB6]|\uD83E[\uDD26\uDD37-\uDD39\uDD3D\uDD3E\uDDB8\uDDB9\uDDCD-\uDDCF\uDDD6-\uDDDD])(?:(?:\uD83C[\uDFFB-\uDFFF])\u200D[\u2640\u2642]|\u200D[\u2640\u2642])|\uD83C\uDFF4\u200D\u2620)\uFE0F|\uD83D\uDC69\u200D\uD83D\uDC67\u200D(?:\uD83D[\uDC66\uDC67])|\uD83C\uDFF3\uFE0F\u200D\uD83C\uDF08|\uD83D\uDC15\u200D\uD83E\uDDBA|\uD83D\uDC69\u200D\uD83D\uDC66|\uD83D\uDC69\u200D\uD83D\uDC67|\uD83C\uDDFD\uD83C\uDDF0|\uD83C\uDDF4\uD83C\uDDF2|\uD83C\uDDF6\uD83C\uDDE6|[#\*0-9]\uFE0F\u20E3|\uD83C\uDDE7(?:\uD83C[\uDDE6\uDDE7\uDDE9-\uDDEF\uDDF1-\uDDF4\uDDF6-\uDDF9\uDDFB\uDDFC\uDDFE\uDDFF])|\uD83C\uDDF9(?:\uD83C[\uDDE6\uDDE8\uDDE9\uDDEB-\uDDED\uDDEF-\uDDF4\uDDF7\uDDF9\uDDFB\uDDFC\uDDFF])|\uD83C\uDDEA(?:\uD83C[\uDDE6\uDDE8\uDDEA\uDDEC\uDDED\uDDF7-\uDDFA])|\uD83E\uDDD1(?:\uD83C[\uDFFB-\uDFFF])|\uD83C\uDDF7(?:\uD83C[\uDDEA\uDDF4\uDDF8\uDDFA\uDDFC])|\uD83D\uDC69(?:\uD83C[\uDFFB-\uDFFF])|\uD83C\uDDF2(?:\uD83C[\uDDE6\uDDE8-\uDDED\uDDF0-\uDDFF])|\uD83C\uDDE6(?:\uD83C[\uDDE8-\uDDEC\uDDEE\uDDF1\uDDF2\uDDF4\uDDF6-\uDDFA\uDDFC\uDDFD\uDDFF])|\uD83C\uDDF0(?:\uD83C[\uDDEA\uDDEC-\uDDEE\uDDF2\uDDF3\uDDF5\uDDF7\uDDFC\uDDFE\uDDFF])|\uD83C\uDDED(?:\uD83C[\uDDF0\uDDF2\uDDF3\uDDF7\uDDF9\uDDFA])|\uD83C\uDDE9(?:\uD83C[\uDDEA\uDDEC\uDDEF\uDDF0\uDDF2\uDDF4\uDDFF])|\uD83C\uDDFE(?:\uD83C[\uDDEA\uDDF9])|\uD83C\uDDEC(?:\uD83C[\uDDE6\uDDE7\uDDE9-\uDDEE\uDDF1-\uDDF3\uDDF5-\uDDFA\uDDFC\uDDFE])|\uD83C\uDDF8(?:\uD83C[\uDDE6-\uDDEA\uDDEC-\uDDF4\uDDF7-\uDDF9\uDDFB\uDDFD-\uDDFF])|\uD83C\uDDEB(?:\uD83C[\uDDEE-\uDDF0\uDDF2\uDDF4\uDDF7])|\uD83C\uDDF5(?:\uD83C[\uDDE6\uDDEA-\uDDED\uDDF0-\uDDF3\uDDF7-\uDDF9\uDDFC\uDDFE])|\uD83C\uDDFB(?:\uD83C[\uDDE6\uDDE8\uDDEA\uDDEC\uDDEE\uDDF3\uDDFA])|\uD83C\uDDF3(?:\uD83C[\uDDE6\uDDE8\uDDEA-\uDDEC\uDDEE\uDDF1\uDDF4\uDDF5\uDDF7\uDDFA\uDDFF])|\uD83C\uDDE8(?:\uD83C[\uDDE6\uDDE8\uDDE9\uDDEB-\uDDEE\uDDF0-\uDDF5\uDDF7\uDDFA-\uDDFF])|\uD83C\uDDF1(?:\uD83C[\uDDE6-\uDDE8\uDDEE\uDDF0\uDDF7-\uDDFB\uDDFE])|\uD83C\uDDFF(?:\uD83C[\uDDE6\uDDF2\uDDFC])|\uD83C\uDDFC(?:\uD83C[\uDDEB\uDDF8])|\uD83C\uDDFA(?:\uD83C[\uDDE6\uDDEC\uDDF2\uDDF3\uDDF8\uDDFE\uDDFF])|\uD83C\uDDEE(?:\uD83C[\uDDE8-\uDDEA\uDDF1-\uDDF4\uDDF6-\uDDF9])|\uD83C\uDDEF(?:\uD83C[\uDDEA\uDDF2\uDDF4\uDDF5])|(?:\uD83C[\uDFC3\uDFC4\uDFCA]|\uD83D[\uDC6E\uDC71\uDC73\uDC77\uDC81\uDC82\uDC86\uDC87\uDE45-\uDE47\uDE4B\uDE4D\uDE4E\uDEA3\uDEB4-\uDEB6]|\uD83E[\uDD26\uDD37-\uDD39\uDD3D\uDD3E\uDDB8\uDDB9\uDDCD-\uDDCF\uDDD6-\uDDDD])(?:\uD83C[\uDFFB-\uDFFF])|(?:\u26F9|\uD83C[\uDFCB\uDFCC]|\uD83D\uDD75)(?:\uD83C[\uDFFB-\uDFFF])|(?:[\u261D\u270A-\u270D]|\uD83C[\uDF85\uDFC2\uDFC7]|\uD83D[\uDC42\uDC43\uDC46-\uDC50\uDC66\uDC67\uDC6B-\uDC6D\uDC70\uDC72\uDC74-\uDC76\uDC78\uDC7C\uDC83\uDC85\uDCAA\uDD74\uDD7A\uDD90\uDD95\uDD96\uDE4C\uDE4F\uDEC0\uDECC]|\uD83E[\uDD0F\uDD18-\uDD1C\uDD1E\uDD1F\uDD30-\uDD36\uDDB5\uDDB6\uDDBB\uDDD2-\uDDD5])(?:\uD83C[\uDFFB-\uDFFF])|(?:[\u231A\u231B\u23E9-\u23EC\u23F0\u23F3\u25FD\u25FE\u2614\u2615\u2648-\u2653\u267F\u2693\u26A1\u26AA\u26AB\u26BD\u26BE\u26C4\u26C5\u26CE\u26D4\u26EA\u26F2\u26F3\u26F5\u26FA\u26FD\u2705\u270A\u270B\u2728\u274C\u274E\u2753-\u2755\u2757\u2795-\u2797\u27B0\u27BF\u2B1B\u2B1C\u2B50\u2B55]|\uD83C[\uDC04\uDCCF\uDD8E\uDD91-\uDD9A\uDDE6-\uDDFF\uDE01\uDE1A\uDE2F\uDE32-\uDE36\uDE38-\uDE3A\uDE50\uDE51\uDF00-\uDF20\uDF2D-\uDF35\uDF37-\uDF7C\uDF7E-\uDF93\uDFA0-\uDFCA\uDFCF-\uDFD3\uDFE0-\uDFF0\uDFF4\uDFF8-\uDFFF]|\uD83D[\uDC00-\uDC3E\uDC40\uDC42-\uDCFC\uDCFF-\uDD3D\uDD4B-\uDD4E\uDD50-\uDD67\uDD7A\uDD95\uDD96\uDDA4\uDDFB-\uDE4F\uDE80-\uDEC5\uDECC\uDED0-\uDED2\uDED5\uDEEB\uDEEC\uDEF4-\uDEFA\uDFE0-\uDFEB]|\uD83E[\uDD0D-\uDD3A\uDD3C-\uDD45\uDD47-\uDD71\uDD73-\uDD76\uDD7A-\uDDA2\uDDA5-\uDDAA\uDDAE-\uDDCA\uDDCD-\uDDFF\uDE70-\uDE73\uDE78-\uDE7A\uDE80-\uDE82\uDE90-\uDE95])|(?:[#\*0-9\xA9\xAE\u203C\u2049\u2122\u2139\u2194-\u2199\u21A9\u21AA\u231A\u231B\u2328\u23CF\u23E9-\u23F3\u23F8-\u23FA\u24C2\u25AA\u25AB\u25B6\u25C0\u25FB-\u25FE\u2600-\u2604\u260E\u2611\u2614\u2615\u2618\u261D\u2620\u2622\u2623\u2626\u262A\u262E\u262F\u2638-\u263A\u2640\u2642\u2648-\u2653\u265F\u2660\u2663\u2665\u2666\u2668\u267B\u267E\u267F\u2692-\u2697\u2699\u269B\u269C\u26A0\u26A1\u26AA\u26AB\u26B0\u26B1\u26BD\u26BE\u26C4\u26C5\u26C8\u26CE\u26CF\u26D1\u26D3\u26D4\u26E9\u26EA\u26F0-\u26F5\u26F7-\u26FA\u26FD\u2702\u2705\u2708-\u270D\u270F\u2712\u2714\u2716\u271D\u2721\u2728\u2733\u2734\u2744\u2747\u274C\u274E\u2753-\u2755\u2757\u2763\u2764\u2795-\u2797\u27A1\u27B0\u27BF\u2934\u2935\u2B05-\u2B07\u2B1B\u2B1C\u2B50\u2B55\u3030\u303D\u3297\u3299]|\uD83C[\uDC04\uDCCF\uDD70\uDD71\uDD7E\uDD7F\uDD8E\uDD91-\uDD9A\uDDE6-\uDDFF\uDE01\uDE02\uDE1A\uDE2F\uDE32-\uDE3A\uDE50\uDE51\uDF00-\uDF21\uDF24-\uDF93\uDF96\uDF97\uDF99-\uDF9B\uDF9E-\uDFF0\uDFF3-\uDFF5\uDFF7-\uDFFF]|\uD83D[\uDC00-\uDCFD\uDCFF-\uDD3D\uDD49-\uDD4E\uDD50-\uDD67\uDD6F\uDD70\uDD73-\uDD7A\uDD87\uDD8A-\uDD8D\uDD90\uDD95\uDD96\uDDA4\uDDA5\uDDA8\uDDB1\uDDB2\uDDBC\uDDC2-\uDDC4\uDDD1-\uDDD3\uDDDC-\uDDDE\uDDE1\uDDE3\uDDE8\uDDEF\uDDF3\uDDFA-\uDE4F\uDE80-\uDEC5\uDECB-\uDED2\uDED5\uDEE0-\uDEE5\uDEE9\uDEEB\uDEEC\uDEF0\uDEF3-\uDEFA\uDFE0-\uDFEB]|\uD83E[\uDD0D-\uDD3A\uDD3C-\uDD45\uDD47-\uDD71\uDD73-\uDD76\uDD7A-\uDDA2\uDDA5-\uDDAA\uDDAE-\uDDCA\uDDCD-\uDDFF\uDE70-\uDE73\uDE78-\uDE7A\uDE80-\uDE82\uDE90-\uDE95])\uFE0F|(?:[\u261D\u26F9\u270A-\u270D]|\uD83C[\uDF85\uDFC2-\uDFC4\uDFC7\uDFCA-\uDFCC]|\uD83D[\uDC42\uDC43\uDC46-\uDC50\uDC66-\uDC78\uDC7C\uDC81-\uDC83\uDC85-\uDC87\uDC8F\uDC91\uDCAA\uDD74\uDD75\uDD7A\uDD90\uDD95\uDD96\uDE45-\uDE47\uDE4B-\uDE4F\uDEA3\uDEB4-\uDEB6\uDEC0\uDECC]|\uD83E[\uDD0F\uDD18-\uDD1F\uDD26\uDD30-\uDD39\uDD3C-\uDD3E\uDDB5\uDDB6\uDDB8\uDDB9\uDDBB\uDDCD-\uDDCF\uDDD1-\uDDDD])/g;
+};
+
+
+/***/ }),
+
+/***/ 927:
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+const _SingleBar = __webpack_require__(46);
+const _MultiBar = __webpack_require__(200);
+const _Presets = __webpack_require__(491);
+
+// sub-module access
+module.exports = {
+    Bar: _SingleBar,
+    SingleBar: _SingleBar,
+    MultiBar: _MultiBar,
+    Presets: _Presets
+};
+
+/***/ }),
+
 /***/ 933:
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
@@ -4338,14 +6304,304 @@ function getScope() {
   return core.getInput("scope");
 }
 
-function getRecursive() {
-  return core.getInput("recursive");
-}
-
 module.exports = {
   getAction,
-  getScope,
-  getRecursive
+  getScope
+};
+
+
+/***/ }),
+
+/***/ 947:
+/***/ (function(module) {
+
+"use strict";
+/* eslint-disable yoda */
+
+
+const isFullwidthCodePoint = codePoint => {
+	if (Number.isNaN(codePoint)) {
+		return false;
+	}
+
+	// Code points are derived from:
+	// http://www.unix.org/Public/UNIDATA/EastAsianWidth.txt
+	if (
+		codePoint >= 0x1100 && (
+			codePoint <= 0x115F || // Hangul Jamo
+			codePoint === 0x2329 || // LEFT-POINTING ANGLE BRACKET
+			codePoint === 0x232A || // RIGHT-POINTING ANGLE BRACKET
+			// CJK Radicals Supplement .. Enclosed CJK Letters and Months
+			(0x2E80 <= codePoint && codePoint <= 0x3247 && codePoint !== 0x303F) ||
+			// Enclosed CJK Letters and Months .. CJK Unified Ideographs Extension A
+			(0x3250 <= codePoint && codePoint <= 0x4DBF) ||
+			// CJK Unified Ideographs .. Yi Radicals
+			(0x4E00 <= codePoint && codePoint <= 0xA4C6) ||
+			// Hangul Jamo Extended-A
+			(0xA960 <= codePoint && codePoint <= 0xA97C) ||
+			// Hangul Syllables
+			(0xAC00 <= codePoint && codePoint <= 0xD7A3) ||
+			// CJK Compatibility Ideographs
+			(0xF900 <= codePoint && codePoint <= 0xFAFF) ||
+			// Vertical Forms
+			(0xFE10 <= codePoint && codePoint <= 0xFE19) ||
+			// CJK Compatibility Forms .. Small Form Variants
+			(0xFE30 <= codePoint && codePoint <= 0xFE6B) ||
+			// Halfwidth and Fullwidth Forms
+			(0xFF01 <= codePoint && codePoint <= 0xFF60) ||
+			(0xFFE0 <= codePoint && codePoint <= 0xFFE6) ||
+			// Kana Supplement
+			(0x1B000 <= codePoint && codePoint <= 0x1B001) ||
+			// Enclosed Ideographic Supplement
+			(0x1F200 <= codePoint && codePoint <= 0x1F251) ||
+			// CJK Unified Ideographs Extension B .. Tertiary Ideographic Plane
+			(0x20000 <= codePoint && codePoint <= 0x3FFFD)
+		)
+	) {
+		return true;
+	}
+
+	return false;
+};
+
+module.exports = isFullwidthCodePoint;
+module.exports.default = isFullwidthCodePoint;
+
+
+/***/ }),
+
+/***/ 952:
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+const _ETA = __webpack_require__(480);
+const _Terminal = __webpack_require__(194);
+const _formatter = __webpack_require__(52);
+const _EventEmitter = __webpack_require__(614);
+
+// Progress-Bar constructor
+module.exports = class GenericBar extends _EventEmitter{
+
+    constructor(options){
+        super();
+
+        // store options
+        this.options = options;
+
+        // store terminal instance
+        this.terminal = (this.options.terminal) ? this.options.terminal : new _Terminal(this.options.stream);
+
+        // the current bar value
+        this.value = 0;
+
+        // the end value of the bar
+        this.total = 100;
+
+        // last drawn string - only render on change!
+        this.lastDrawnString = null;
+
+        // start time (used for eta calculation)
+        this.startTime = null;
+
+        // stop time (used for duration calculation)
+        this.stopTime = null;
+
+        // last update time
+        this.lastRedraw = Date.now();
+
+        // default eta calculator (will be re-create on start)
+        this.eta = new _ETA(this.options.etaBufferLength, 0, 0);
+
+        // payload data
+        this.payload = {};
+
+        // progress bar active ?
+        this.isActive = false;
+
+        // use default formatter or custom one ?
+        this.formatter = (typeof this.options.format === 'function') ? this.options.format : _formatter;
+    }
+
+    // internal render function
+    render(){
+        // calculate the normalized current progress
+        let progress = (this.value/this.total);
+
+        // handle NaN Errors caused by total=0. Set to complete in this case
+        if (isNaN(progress)){
+            progress = (this.options && this.options.emptyOnZero) ? 0.0 : 1.0;
+        }
+
+        // limiter
+        progress = Math.min(Math.max(progress, 0.0), 1.0);
+
+        // formatter params
+        const params = {
+            progress: progress,
+            eta: this.eta.getTime(),
+            startTime: this.startTime,
+            stopTime: this.stopTime,
+            total: this.total,
+            value: this.value,
+            maxWidth: this.terminal.getWidth()
+        };
+
+        // automatic eta update ? (long running processes)
+        if (this.options.etaAsynchronousUpdate){
+            this.updateETA();
+        }
+
+        // format string
+        const s = this.formatter(this.options, params, this.payload);
+
+        const forceRedraw = this.options.forceRedraw
+            // force redraw in notty-mode!
+            || (this.options.noTTYOutput && !this.terminal.isTTY());
+
+        // string changed ? only trigger redraw on change!
+        if (forceRedraw || this.lastDrawnString != s){
+            // trigger event
+            this.emit('redraw-pre');
+
+            // set cursor to start of line
+            this.terminal.cursorTo(0, null);
+
+            // write output
+            this.terminal.write(s);
+
+            // clear to the right from cursor
+            this.terminal.clearRight();
+
+            // store string
+            this.lastDrawnString = s;
+
+            // set last redraw time
+            this.lastRedraw = Date.now();
+
+            // trigger event
+            this.emit('redraw-post');
+        }
+    }
+
+    // start the progress bar
+    start(total, startValue, payload){
+        // set initial values
+        this.value = startValue || 0;
+        this.total = (typeof total !== 'undefined' && total >= 0) ? total : 100;
+
+        // store payload (optional)
+        this.payload = payload || {};
+
+        // store start time for duration+eta calculation
+        this.startTime = Date.now();
+
+        // reset string line buffer (redraw detection)
+        this.lastDrawnString = '';
+
+        // initialize eta buffer
+        this.eta = new _ETA(this.options.etaBufferLength, this.startTime, this.value);
+
+        // set flag
+        this.isActive = true;
+
+        // start event
+        this.emit('start', total, startValue);
+    }
+
+    // stop the bar
+    stop(){
+        // set flag
+        this.isActive = false;
+        
+        // store stop timestamp to get total duration
+        this.stopTime = new Date();
+
+        // stop event
+        this.emit('stop', this.total, this.value);
+    }
+
+    // update the bar value
+    // update(value, payload)
+    // update(payload)
+    update(arg0, arg1 = {}){
+        // value set ?
+        // update(value, [payload]);
+        if (typeof arg0 === 'number') {
+            // update value
+            this.value = arg0;
+
+            // add new value; recalculate eta
+            this.eta.update(Date.now(), arg0, this.total);
+        }
+
+        // extract payload
+        // update(value, payload)
+        // update(payload)
+        const payloadData = ((typeof arg0 === 'object') ? arg0 : arg1) || {};
+
+        // update event (before stop() is called)
+        this.emit('update', this.total, this.value);
+
+        // merge payload
+        for (const key in payloadData){
+            this.payload[key] = payloadData[key];
+        }
+
+        // limit reached ? autostop set ?
+        if (this.value >= this.getTotal() && this.options.stopOnComplete) {
+            this.stop();
+        }
+    }
+
+    // update the bar value
+    // increment(delta, payload)
+    // increment(payload)
+    increment(arg0 = 1, arg1 = {}){
+        // increment([payload]) => step=1
+        // handle the use case when `step` is omitted but payload is passed
+        if (typeof arg0 === 'object') {
+            this.update(this.value + 1, arg0);
+        
+        // increment([step=1], [payload={}])
+        }else{
+            this.update(this.value + arg0, arg1);
+        }
+    }
+
+    // get the total (limit) value
+    getTotal(){
+        return this.total;
+    }
+
+    // set the total (limit) value
+    setTotal(total){
+        if (typeof total !== 'undefined' && total >= 0){
+            this.total = total;
+        }
+    }
+
+    // force eta calculation update (long running processes)
+    updateETA(){
+        // add new value; recalculate eta
+        this.eta.update(Date.now(), this.value, this.total);
+    }
+}
+
+
+/***/ }),
+
+/***/ 961:
+/***/ (function(module) {
+
+module.exports = function(colors) {
+  var available = ['underline', 'inverse', 'grey', 'yellow', 'red', 'green',
+    'blue', 'white', 'cyan', 'magenta', 'brightYellow', 'brightRed',
+    'brightGreen', 'brightBlue', 'brightWhite', 'brightCyan', 'brightMagenta'];
+  return function(letter, i, exploded) {
+    return letter === ' ' ? letter :
+      colors[
+          available[Math.round(Math.random() * (available.length - 2))]
+      ](letter);
+  };
 };
 
 

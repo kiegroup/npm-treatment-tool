@@ -16,12 +16,41 @@
 
 const glob = require("glob");
 
-function getListPackageJsonFiles(options = { ignore: "node_modules/**" }) {
-  return glob.sync("**/package.json", options);
+function getListPackageJsonFiles(
+  options = { ignore: "**/node_modules/**", additionalIgnorePatterns: [] }
+) {
+  const filePaths = glob.sync("**/package.json", options);
+  return options.additionalIgnorePatterns &&
+    options.additionalIgnorePatterns.length > 0
+    ? filePaths.filter(
+        filePath =>
+          !options.additionalIgnorePatterns.find(regex =>
+            filePath.match(new RegExp(regex))
+          )
+      )
+    : filePaths;
 }
 
-function getFileList(options = { ignore: "node_modules/**" }) {
-  return glob.sync("**/*.ts | **/*.tsx | **/package.json | **/*.js", options);
+async function getFileList(options = { ignore: "**/node_modules/**" }) {
+  const patterns = ["**/*.ts", "**/*.tsx", "**/package.json", "**/*.js"];
+  return (
+    await Promise.all(
+      patterns.map(
+        pattern =>
+          new Promise((resolve, reject) => {
+            glob(pattern, options, (err, matches) => {
+              if (!err && options.strict && matches.length === 0) {
+                reject(new Error("'" + pattern + "' matched no files"));
+              } else if (err) {
+                reject(err);
+              } else {
+                resolve(matches);
+              }
+            });
+          })
+      )
+    )
+  ).flat();
 }
 
 module.exports = { getListPackageJsonFiles, getFileList };

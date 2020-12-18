@@ -1,10 +1,10 @@
 {
-  "name": "@kie/package-json-treatment-tool",
+  "name": "@kie/npm-treatment-tool",
   "version": "1.0.0",
   "description": "a js tool to treat package.json files.",
   "main": "./bin/cli.js",
   "bin": {
-    "package-json-tt": "./bin/cli.js"
+    "npm-tt": "./bin/cli.js"
   },
   "scripts": {
     "test": "jest",
@@ -21,7 +21,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kiegroup/package-json-treatment-tool.git"
+    "url": "git+https://github.com/kiegroup/npm-treatment-tool.git"
   },
   "keywords": [
     "package.json",
@@ -31,12 +31,13 @@
   "author": "Enrique Mingorance Cano <emingora@redhat.com>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/kiegroup/package-json-treatment-tool/issues"
+    "url": "https://github.com/kiegroup/npm-treatment-tool/issues"
   },
-  "homepage": "https://github.com/kiegroup/package-json-treatment-tool#readme",
+  "homepage": "https://github.com/kiegroup/npm-treatment-tool#readme",
   "dependencies": {
     "@actions/core": "^1.2.6",
     "argparse": "^2.0.1",
+    "cli-progress": "^3.8.2",
     "dotenv": "^8.2.0",
     "eol": "^0.9.1",
     "glob": "^7.1.6"
@@ -68,6 +69,6 @@
     "arrowParens": "avoid"
   },
   "engines": {
-    "node": ">= 10.x"
+    "node": ">= 12.x"
   }
 }

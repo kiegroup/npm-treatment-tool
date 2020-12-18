@@ -1,7 +1,6 @@
 const { replace } = require("../../../../src/lib/replacement/javascript");
 const path = require("path");
 const fs = require("fs");
-const eol = require("eol");
 
 test("getFileReplacement js", () => {
   // Arrange
@@ -9,7 +8,6 @@ test("getFileReplacement js", () => {
     "kogito-tooling": "@scope/kogito-tooling",
     "@kogito-tooling/patternfly-base": "@scope/patternfly-base",
     "@kogito-tooling/external-assets-base": "@scope/external-assets-base",
-    "kogito-tooling": "@scope/kogito-tooling",
     "@kogito-tooling/dmn-editor-unpacked": "@scope/dmn-editor-unpacked",
     "@kogito-tooling/kie-editors-standalone": "@scope/kie-editors-standalone"
   };
@@ -71,6 +69,54 @@ test("getFileReplacement ts", () => {
   // Assert
   const expectedContent = fs.readFileSync(
     path.join(".", "test", "resources", "expected", "testfile.ts"),
+    "utf8"
+  );
+  expect(result).toEqual(expectedContent);
+});
+
+test("getFileReplacement ts", () => {
+  // Arrange
+  const replacementMap = {
+    "kogito-tooling": "@scope/kogito-tooling",
+    "@kogito-tooling/i18n": "@scope/i18n",
+    "@kogito-tooling/workspace": "@scope/workspace",
+    "@kogito-tooling/channel-common-api": "@redhat/channel-common-api"
+  };
+
+  const javascriptContent = fs.readFileSync(
+    path.join(".", "test", "resources", "testfile2.ts"),
+    "utf8"
+  );
+  // Act
+  const result = replace(javascriptContent, replacementMap);
+
+  // Assert
+  const expectedContent = fs.readFileSync(
+    path.join(".", "test", "resources", "expected", "testfile2.ts"),
+    "utf8"
+  );
+  expect(result).toEqual(expectedContent);
+});
+
+test("getFileReplacement EditorPage tsx", () => {
+  // Arrange
+  const replacementMap = {
+    "kogito-tooling": "@scope/kogito-tooling",
+    "@kogito-tooling/editor": "@scope/editor",
+    "@kogito-tooling/workspace": "@scope/workspace",
+    "@kogito-tooling/channel-common-api": "@redhat/channel-common-api"
+  };
+
+  const javascriptContent = fs.readFileSync(
+    path.join(".", "test", "resources", "EditorPage.test.tsx"),
+    "utf8"
+  );
+  // Act
+  const result = replace(javascriptContent, replacementMap);
+
+  // Assert
+  const expectedContent = fs.readFileSync(
+    path.join(".", "test", "resources", "expected", "EditorPage.test.tsx"),
     "utf8"
   );
   expect(result).toEqual(expectedContent);
