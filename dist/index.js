@@ -119,6 +119,14 @@ function treatScripts(scripts, replacementMap) {
       Object.entries(replacementMap).forEach(([key, value]) => {
         let script = scriptValue.replace(new RegExp(` ${key}`, "gi"), value);
         script = script.replace(new RegExp(`=${key}`, "gi"), `=${value}`);
+        script = script.replace(
+          new RegExp(`ignore${value}`, "gi"),
+          `ignore ${value}`
+        );
+        script = script.replace(
+          new RegExp(`scope${value}`, "gi"),
+          `scope ${value}`
+        );
         scripts[scriptKey] = script;
         scriptValue = script;
       })
@@ -1809,13 +1817,17 @@ exports.issueCommand = issueCommand;
 
 const { ClientError, logger } = __webpack_require__(79);
 const { getAction, getScope } = __webpack_require__(933);
-const { addScope } = __webpack_require__(655);
+const { rename } = __webpack_require__(162);
+const { PackageRename } = __webpack_require__(877);
 
 __webpack_require__(63).config();
 
 async function main() {
   if (getAction() === "name") {
-    addScope(getScope());
+    const packageRename = new PackageRename({
+      scope: getScope()
+    });
+    await rename(packageRename);
   } else {
     throw new Error(
       `flow type input value '${getAction()}' is not supported. Please check documentation.`
@@ -2189,6 +2201,68 @@ exports.realpath = function realpath(p, cache, cb) {
     start();
   }
 };
+
+
+/***/ }),
+
+/***/ 162:
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+const { logger } = __webpack_require__(79);
+const { getListPackageJsonFiles, getFileList } = __webpack_require__(300);
+const { getNewPackageName } = __webpack_require__(504);
+const { getFileReplacement } = __webpack_require__(643);
+
+const fs = __webpack_require__(747);
+const path = __webpack_require__(622);
+const cliProgress = __webpack_require__(927);
+
+async function rename(packageRename, options = { ignorePatterns: [] }) {
+  const replacementMap = getAllProjectNames(options.ignorePatterns).reduce(
+    (acc, curr) => {
+      acc[curr] = getNewPackageName(curr, packageRename);
+      return acc;
+    },
+    {}
+  );
+
+  logger.debug(
+    "Replacement Map",
+    Object.keys(replacementMap).map(key => `${key}:${replacementMap[key]}\n`)
+  );
+
+  logger.info(`Getting files...`);
+  const filesToReplace = await getFileList();
+
+  logger.info(`Replacing files...`);
+  const progressBar = new cliProgress.SingleBar(
+    {
+      stopOnComplete: true,
+      format:
+        "progress [{bar}] {percentage}% | Duration: {duration}s | ETA: {eta}ms | {value}/{total} | {filename}"
+    },
+    cliProgress.Presets.shades_classic
+  );
+  progressBar.start(filesToReplace.length, 0);
+  for (const filePath of filesToReplace) {
+    progressBar.increment({ filename: path.basename(filePath) });
+    const fileReplacement = getFileReplacement(filePath);
+    const fileContent = fs.readFileSync(filePath, "utf8");
+    const newFileContent = fileReplacement.replace(fileContent, replacementMap);
+    fs.writeFileSync(filePath, newFileContent);
+  }
+}
+
+function getAllProjectNames(additionalIgnorePatterns) {
+  return getListPackageJsonFiles({
+    ignore: "**/node_modules/**",
+    additionalIgnorePatterns
+  })
+    .map(file => JSON.parse(fs.readFileSync(file)))
+    .map(jsonObject => jsonObject.name);
+}
+
+module.exports = { rename };
 
 
 /***/ }),
@@ -5245,6 +5319,26 @@ module.exports = {
 
 /***/ }),
 
+/***/ 504:
+/***/ (function(module) {
+
+function treatScopeName(scopeName) {
+  return !scopeName.startsWith("@") ? `@${scopeName}` : scopeName;
+}
+
+function getNewPackageName(currentName, packageRename) {
+  return `${
+    packageRename.scope ? treatScopeName(packageRename.scope) + "/" : ""
+  }${packageRename.prefix ? packageRename.prefix : ""}${
+    currentName.match(/(@[\w-_]*\/)?(.*)/)[2]
+  }${packageRename.suffix ? packageRename.suffix : ""}`;
+}
+
+module.exports = { treatScopeName, getNewPackageName };
+
+
+/***/ }),
+
 /***/ 586:
 /***/ (function(module) {
 
@@ -5568,76 +5662,6 @@ function getFileReplacement(filePath) {
 }
 
 module.exports = { getFileReplacement };
-
-
-/***/ }),
-
-/***/ 655:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-const { logger } = __webpack_require__(79);
-const { getListPackageJsonFiles, getFileList } = __webpack_require__(300);
-const { getFileReplacement } = __webpack_require__(643);
-
-const fs = __webpack_require__(747);
-const path = __webpack_require__(622);
-const cliProgress = __webpack_require__(927);
-
-async function addScope(scopeName, options = { ignorePatterns: [] }) {
-  const finalScopeName = treatScopeName(scopeName);
-  const replacementMap = getAllProjectNames(options.ignorePatterns).reduce(
-    (acc, curr) => {
-      acc[curr] = getNewScope(curr, finalScopeName);
-      return acc;
-    },
-    {}
-  );
-
-  logger.debug(
-    "Replacement Map",
-    Object.keys(replacementMap).map(key => `${key}:${replacementMap[key]}\n`)
-  );
-
-  logger.info(`Getting files...`);
-  const filesToReplace = await getFileList();
-
-  logger.info(`Replacing files...`);
-  const progressBar = new cliProgress.SingleBar(
-    {
-      stopOnComplete: true,
-      format:
-        "progress [{bar}] {percentage}% | Duration: {duration}s | ETA: {eta}ms | {value}/{total} | {filename}"
-    },
-    cliProgress.Presets.shades_classic
-  );
-  progressBar.start(filesToReplace.length, 0);
-  for (const filePath of filesToReplace) {
-    progressBar.increment({ filename: path.basename(filePath) });
-    const fileReplacement = getFileReplacement(filePath);
-    const fileContent = fs.readFileSync(filePath, "utf8");
-    const newFileContent = fileReplacement.replace(fileContent, replacementMap);
-    fs.writeFileSync(filePath, newFileContent);
-  }
-}
-
-function getNewScope(packageName, newScopeName) {
-  return `${newScopeName}/${packageName.match(/(@[\w-_]*\/)?(.*)/)[2]}`;
-}
-
-function treatScopeName(scopeName) {
-  return !scopeName.startsWith("@") ? `@${scopeName}` : scopeName;
-}
-
-function getAllProjectNames(additionalIgnorePatterns) {
-  return getListPackageJsonFiles({
-    ignore: "**/node_modules/**",
-    additionalIgnorePatterns
-  })
-    .map(file => JSON.parse(fs.readFileSync(file)))
-    .map(jsonObject => jsonObject.name);
-}
-
-module.exports = { addScope };
 
 
 /***/ }),
@@ -6219,6 +6243,24 @@ function childrenIgnored (self, path) {
     return !!(item.gmatcher && item.gmatcher.match(path))
   })
 }
+
+
+/***/ }),
+
+/***/ 877:
+/***/ (function(module) {
+
+class PackageRename {
+  constructor(
+    values = { scope: undefined, prefix: undefined, suffix: undefined }
+  ) {
+    this.scope = values.scope;
+    this.prefix = values.prefix;
+    this.suffix = values.suffix;
+  }
+}
+
+module.exports = PackageRename;
 
 
 /***/ }),

@@ -2,13 +2,17 @@
 
 const { ClientError, logger } = require("./src/lib/common");
 const { getAction, getScope } = require("./src/lib/util/action-utils");
-const { addScope } = require("./src/lib/tools/scope");
+const { rename } = require("./src/lib/tools/name");
+const { PackageRename } = require("./src/model/package-rename");
 
 require("dotenv").config();
 
 async function main() {
   if (getAction() === "name") {
-    addScope(getScope());
+    const packageRename = new PackageRename({
+      scope: getScope()
+    });
+    await rename(packageRename);
   } else {
     throw new Error(
       `flow type input value '${getAction()}' is not supported. Please check documentation.`

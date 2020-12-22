@@ -1,16 +1,16 @@
 const { logger } = require("../common");
 const { getListPackageJsonFiles, getFileList } = require("../util/file-utils");
+const { getNewPackageName } = require("../util/name");
 const { getFileReplacement } = require("../replacement/selector");
 
 const fs = require("fs");
 const path = require("path");
 const cliProgress = require("cli-progress");
 
-async function addScope(scopeName, options = { ignorePatterns: [] }) {
-  const finalScopeName = treatScopeName(scopeName);
+async function rename(packageRename, options = { ignorePatterns: [] }) {
   const replacementMap = getAllProjectNames(options.ignorePatterns).reduce(
     (acc, curr) => {
-      acc[curr] = getNewScope(curr, finalScopeName);
+      acc[curr] = getNewPackageName(curr, packageRename);
       return acc;
     },
     {}
@@ -43,14 +43,6 @@ async function addScope(scopeName, options = { ignorePatterns: [] }) {
   }
 }
 
-function getNewScope(packageName, newScopeName) {
-  return `${newScopeName}/${packageName.match(/(@[\w-_]*\/)?(.*)/)[2]}`;
-}
-
-function treatScopeName(scopeName) {
-  return !scopeName.startsWith("@") ? `@${scopeName}` : scopeName;
-}
-
 function getAllProjectNames(additionalIgnorePatterns) {
   return getListPackageJsonFiles({
     ignore: "**/node_modules/**",
@@ -60,4 +52,4 @@ function getAllProjectNames(additionalIgnorePatterns) {
     .map(jsonObject => jsonObject.name);
 }
 
-module.exports = { addScope };
+module.exports = { rename };
