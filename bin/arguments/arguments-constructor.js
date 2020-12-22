@@ -1,5 +1,5 @@
 const { ArgumentParser } = require("argparse");
-const { getArguments: getScopeArguments } = require("./scope-arguments");
+const { getArguments: getNameArguments } = require("./name-arguments");
 const pkg = require("../../package.json");
 
 function getArguments() {
@@ -14,7 +14,7 @@ function getArguments() {
   });
 
   const subparsers = parser.add_subparsers({ dest: "action", required: true });
-  getScopeArguments(subparsers);
+  getNameArguments(subparsers);
   return parser.parse_args();
 }
 
