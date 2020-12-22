@@ -1,4 +1,4 @@
-const { addScope } = require("../../../../src/lib/tools/scope");
+const { rename } = require("../../../../src/lib/tools/name");
 
 const {
   getListPackageJsonFiles,
@@ -42,7 +42,7 @@ test("addScope", () => {
     .mockReturnValueOnce("contentc_replaced");
 
   // Act
-  addScope("scopex");
+  rename({ scope: "scopex" });
 
   // Assert
   expect(true).toBe(true);

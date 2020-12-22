@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
 const { ClientError, logger } = require("../src/lib/common");
-const { addScope } = require("../src/lib/tools/scope");
+const { rename } = require("../src/lib/tools/name");
 const { getArguments } = require("./arguments/arguments-constructor");
+const PackageRename = require("../src/model/package-rename");
 
 require("dotenv").config();
 
@@ -15,8 +16,13 @@ async function main() {
   }
   logger.debug("ARGS", args);
 
-  if (args.action === "scope") {
-    addScope(args.s[0], { ignorePatterns: args.i ? args.i : [] });
+  if (args.action === "name") {
+    const packageRename = new PackageRename({
+      scope: args.s ? args.s[0] : undefined,
+      prefix: args.np ? args.np[0] : undefined,
+      suffix: args.ns ? args.ns[0] : undefined
+    });
+    await rename(packageRename, { ignorePatterns: args.i ? args.i : [] });
   }
 }
 

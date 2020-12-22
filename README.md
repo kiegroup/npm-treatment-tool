@@ -4,20 +4,30 @@ a js tool to treat npm projects. The tool is either ready for CLI execution and 
 
 ## Tools
 
-### Scope
+### Name
 
 It basically checks all package.json in a project, gets the project name from them and replace every relation from every package.json, .js, .ts and .tsx files by the new scope.
 
+#### Arguments
+
+- `-s,-scope` the scope to add/replace. It can be with or without `@`
+- `-np,-name-prefix` the prefix to add to every package
+- `-ns,-name-suffix` the suffix to add to every package
+- `-i,-ignore-pattern` a RegEx expression to exclude package.json scanning.
+
 ```
-npm-tt scope -s @newScope
-npm-tt scope -s newScope
+npm-tt name -s @newScope
+npm-tt name -s newScope
+npm-tt name -np "new-prefix-"
+npm-tt name -ns "new-suffix-"
+npm-tt name -s scopex -np "prefixX-" -ns "suffixX-"
 ```
 
 Additionally it is possible to ingnore package files from multi-package project in order no to get package name identifiers, with the `-i` flag followed by regular expressions.
 
 ```
-npm-tt scope -s @scopeX -i "packages\/.*dist\/.*"
-npm-tt scope -s @scopeY -i "packages\/.*dist\/.*" "dist\/.*"
+npm-tt name -s @scopeX -i "packages\/.*dist\/.*"
+npm-tt name -s @scopeY -i "packages\/.*dist\/.*" "dist\/.*"
 ```
 
 ## Note for the community
