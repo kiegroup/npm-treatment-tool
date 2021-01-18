@@ -24,6 +24,14 @@ function treatScripts(scripts, replacementMap) {
       Object.entries(replacementMap).forEach(([key, value]) => {
         let script = scriptValue.replace(new RegExp(` ${key}`, "gi"), value);
         script = script.replace(new RegExp(`=${key}`, "gi"), `=${value}`);
+        script = script.replace(
+          new RegExp(`ignore${value}`, "gi"),
+          `ignore ${value}`
+        );
+        script = script.replace(
+          new RegExp(`scope${value}`, "gi"),
+          `scope ${value}`
+        );
         scripts[scriptKey] = script;
         scriptValue = script;
       })
